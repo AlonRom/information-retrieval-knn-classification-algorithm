@@ -22,16 +22,21 @@ import java.util.Arrays;
 import java.util.List;
 
 public class LuceneHelper {
-    List<ClassificationDocument> docList = null;
+    List<ClassificationDocument> docList;
+    IndexWriter docIndexWriter;
+
 
     public LuceneHelper(List<ClassificationDocument> docList){
         this.docList = docList;
+        docIndexWriter=null;
     }
 
     public void IndexDocList(){
-        IndexWriter docIndexWriter = createIndexWriter(null,false);
+        IndexWriter docIndexWriterEmptyStopWords = createIndexWriter(null,false);
+        IndexDocListWithIndexWriter(docIndexWriterEmptyStopWords);
+        CharArraySet stopWords = GetMostFrequentWords(docIndexWriterEmptyStopWords,Constants.STOP_WORDS_COUNT);
+        docIndexWriter = createIndexWriter(stopWords,true);
         IndexDocListWithIndexWriter(docIndexWriter);
-        CharArraySet stopWords = GetMostFrequentWords(docIndexWriter,Constants.STOP_WORDS_COUNT);
     }
 
     private CharArraySet GetMostFrequentWords(IndexWriter index, int numberOfStopWords){
