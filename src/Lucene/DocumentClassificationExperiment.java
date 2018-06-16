@@ -56,6 +56,14 @@ public class DocumentClassificationExperiment
 			 System.out.println("Failed reading '" + _inputFilePath + "' file!");
 			 System.out.println("Exiting Retrieval Experiment...");
 			 System.exit(1);
-		}	  
+		}
+
+		train(_trainFilePath,_numberOfNeighbors);
+	}
+
+	public static void train(String trainFilePath, int numberOfNeighbors){
+		List<ClassificationDocument> docList = TextFileReader.getListFromCsv(trainFilePath);
+		int i=0;
+
 	}
 }

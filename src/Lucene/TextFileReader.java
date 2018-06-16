@@ -58,28 +58,26 @@ public class TextFileReader
 
 	public static List<ClassificationDocument> getListFromCsv(String csvPath){
 		BufferedReader br = null;
-		String line=null;
-		String csvSplitBy=",";
-		List<ClassificationDocument> docList=new ArrayList();
-
+		String line = null;
+		String csvSplitBy = ",";
+		List<ClassificationDocument> docList = new ArrayList();
 		try {
 
 			br = new BufferedReader(new FileReader(csvPath));
 			while ((line = br.readLine()) != null) {
-
 				// use comma as separator
 				String[] str = line.split(csvSplitBy);
-				Integer docId=new Integer(str[0]);
-				Integer classId=new Integer(str[1]);
-				String title=str[2];
-				String content=str[3];
+				Integer docId = new Integer(str[0]);
+				Integer classId = new Integer(str[1]);
+				String title = str[2];
+				String content = str[3];
 				//Create the ClassificationDocument
-				ClassificationDocument doc=new ClassificationDocument(docId,title,content,classId);
+				ClassificationDocument doc = new ClassificationDocument(docId,title,content,classId);
 				//Add to list
 				docList.add(doc);
 			}
 
-			return null;
+			return docList;
 		}
 		catch (Exception e) {
 			e.printStackTrace();
