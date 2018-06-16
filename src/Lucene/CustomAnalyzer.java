@@ -10,12 +10,20 @@ public class CustomAnalyzer extends Analyzer {
 
     IndexReader reader;
     CharArraySet stopWordSet;
+    boolean usePorterFilter;
 
 
 
     public CustomAnalyzer(CharArraySet stopWordSet){
 
         this.stopWordSet = stopWordSet;
+        this.usePorterFilter = true;
+    }
+
+    public CustomAnalyzer(CharArraySet stopWordSet,boolean usePorterFilter){
+
+        this.stopWordSet = stopWordSet;
+        this.usePorterFilter = usePorterFilter;
     }
 
     @Override
@@ -25,7 +33,8 @@ public class CustomAnalyzer extends Analyzer {
         filter = new LowerCaseFilter(filter);
         if (stopWordSet!=null)
             filter = new StopFilter(filter, stopWordSet);
-        filter = new PorterStemFilter(filter);
+        if (usePorterFilter)
+            filter = new PorterStemFilter(filter);
         return new TokenStreamComponents(source, filter);
     }
 }

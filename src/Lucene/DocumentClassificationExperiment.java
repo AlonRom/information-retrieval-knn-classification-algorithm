@@ -63,7 +63,8 @@ public class DocumentClassificationExperiment
 
 	public static void train(String trainFilePath, int numberOfNeighbors){
 		List<ClassificationDocument> docList = TextFileReader.getListFromCsv(trainFilePath);
-		int i=0;
+        LuceneHelper lucene=new LuceneHelper(docList);
+        lucene.IndexDocList();
 
 	}
 }
