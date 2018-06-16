@@ -21,12 +21,12 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-public class LuceneHelper {
+public class LuceneIndexing {
     List<ClassificationDocument> docList;
     IndexWriter docIndexWriter;
 
 
-    public LuceneHelper(List<ClassificationDocument> docList){
+    public LuceneIndexing(List<ClassificationDocument> docList){
         this.docList = docList;
         docIndexWriter=null;
     }
