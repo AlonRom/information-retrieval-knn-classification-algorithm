@@ -1,10 +1,10 @@
 package Lucene;
 
 public class ClassificationDocument {
-    private Integer docId=0;
-    private String title=null;
-    private String content=null;
-    private Integer classID=0;
+    private Integer docId;
+    private String title;
+    private String content;
+    private Integer classID;
 
     ClassificationDocument(Integer docId, String title, String content, Integer classID){
         this.docId=docId;
