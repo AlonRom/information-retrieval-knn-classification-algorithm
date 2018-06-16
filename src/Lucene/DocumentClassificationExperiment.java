@@ -37,7 +37,8 @@ public class DocumentClassificationExperiment
 			 System.out.println("Failed parsing parameters in '" + _inputFilePath + "' file!");
 			 System.out.println("Exiting Retrieval Experiment...");
 			 System.exit(1);
-		} 
+		}
+
 		catch(IndexOutOfBoundsException e)
 		{
 			System.out.println("One or more paramters are missing in '" + _inputFilePath + "' file!");

@@ -1,15 +1,12 @@
 package Lucene;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,6 +54,37 @@ public class TextFileReader
 	    	 e.printStackTrace();
     		 throw e;
 	      }  
+	}
+
+	public static List<ClassificationDocument> getListFromCsv(String csvPath){
+		BufferedReader br = null;
+		String line=null;
+		String csvSplitBy=",";
+		List<ClassificationDocument> docList=new ArrayList();
+
+		try {
+
+			br = new BufferedReader(new FileReader(csvPath));
+			while ((line = br.readLine()) != null) {
+
+				// use comma as separator
+				String[] str = line.split(csvSplitBy);
+				Integer docId=new Integer(str[0]);
+				Integer classId=new Integer(str[1]);
+				String title=str[2];
+				String content=str[3];
+				//Create the ClassificationDocument
+				ClassificationDocument doc=new ClassificationDocument(docId,title,content,classId);
+				//Add to list
+				docList.add(doc);
+			}
+
+			return null;
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 	public static int SplitDocuments(String inputFile, String outPath) throws Exception
