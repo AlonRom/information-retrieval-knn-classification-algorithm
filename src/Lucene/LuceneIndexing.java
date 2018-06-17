@@ -21,26 +21,30 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-public class LuceneIndexing {
-    List<ClassificationDocument> docList;
-    IndexWriter docIndexWriter;
+public class LuceneIndexing 
+{
+    List<ClassificationDocument> _docList;
+    IndexWriter _docIndexWriter;
 
-
-    public LuceneIndexing(List<ClassificationDocument> docList){
-        this.docList = docList;
-        docIndexWriter=null;
+    public LuceneIndexing(List<ClassificationDocument> docList)
+    {
+        _docList = docList;
+        _docIndexWriter = null;
     }
 
-    public void IndexDocList(){
+    public void IndexDocList()
+    {
         IndexWriter docIndexWriterEmptyStopWords = createIndexWriter(null,false);
         IndexDocListWithIndexWriter(docIndexWriterEmptyStopWords);
         CharArraySet stopWords = GetMostFrequentWords(docIndexWriterEmptyStopWords,Constants.STOP_WORDS_COUNT);
-        docIndexWriter = createIndexWriter(stopWords,true);
-        IndexDocListWithIndexWriter(docIndexWriter);
+        _docIndexWriter = createIndexWriter(stopWords,true);
+        IndexDocListWithIndexWriter(_docIndexWriter);
     }
 
-    private CharArraySet GetMostFrequentWords(IndexWriter index, int numberOfStopWords){
-        try{
+    private CharArraySet GetMostFrequentWords(IndexWriter index, int numberOfStopWords)
+    {
+        try
+        {
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
             //open index reader
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
@@ -58,18 +62,18 @@ public class LuceneIndexing {
             System.out.println();
             //return a char array set in order to initialize other analyzers with stop words consideration
             return new CharArraySet(stopWordsCollection, true);
-
         }
-        catch (Exception e){
+        catch (Exception e)
+        {
             e.printStackTrace();
             return null;
         }
     }
 
-
-
-    private IndexWriter createIndexWriter(CharArraySet StopWord,boolean usePorterFilter){
-        try {
+    private IndexWriter createIndexWriter(CharArraySet StopWord,boolean usePorterFilter)
+    {
+        try 
+        {
             CustomAnalyzer analyzer = new CustomAnalyzer(StopWord, usePorterFilter);
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
             IndexWriterConfig docsFileConfig = new IndexWriterConfig(analyzer);
@@ -77,37 +81,43 @@ public class LuceneIndexing {
             //create a writer for finding the stop words
             IndexWriter indexWriter = new IndexWriter(docsFileIndexdirectory, docsFileConfig);
             return indexWriter;
-
         }
-        catch (Exception e){
+        catch (Exception e)
+        {
             e.printStackTrace();
             return null;
         }
     }
 
-    private void IndexDocListWithIndexWriter(IndexWriter writer){
-        for (ClassificationDocument classDoc:docList){
+    private void IndexDocListWithIndexWriter(IndexWriter writer)
+    {
+        for (ClassificationDocument classDoc:_docList)
+        {
             Document document = new Document();
             //Add content to document
             document.add(new TextField(Constants.CONTENT,new StringReader(classDoc.getContent())));
             //Add title to document
             document.add(new TextField(Constants.TITLE,new StringReader(classDoc.getTitle())));
-            try {
-                if (writer.getConfig().getOpenMode() == IndexWriterConfig.OpenMode.CREATE) {
+            try 
+            {
+                if (writer.getConfig().getOpenMode() == IndexWriterConfig.OpenMode.CREATE) 
+                {
                     //new index, so we just add the document (no old document can be there):
                     writer.addDocument(document);
                 }
             }
-            catch (Exception e){
+            catch (Exception e)
+            {
                 e.printStackTrace();
             }
         }
-        try{
+        try
+        {
             writer.close();
         }
-        catch (Exception e){
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
     }
-
 }

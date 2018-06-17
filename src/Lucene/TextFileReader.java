@@ -48,19 +48,21 @@ public class TextFileReader
 	     {  
 	         int intValue = Integer.parseInt(strValue.trim());  
 	         return intValue;  
-	      } 
-	      catch (NumberFormatException e) 
-	      {  
+	     } 
+	     catch (NumberFormatException e) 
+	     {  
 	    	 e.printStackTrace();
     		 throw e;
-	      }  
+	     }  
 	}
 
-	public static List<ClassificationDocument> getListFromCsv(String csvPath){
+	public static List<ClassificationDocument> getListFromCsv(String csvPath)
+	{
 		BufferedReader br = null;
 		String line = null;
 		String csvSplitBy = ",";
-		List<ClassificationDocument> docList = new ArrayList();
+		
+		List<ClassificationDocument> docList = new ArrayList<ClassificationDocument>();
 		try {
 
 			br = new BufferedReader(new FileReader(csvPath));
@@ -79,7 +81,8 @@ public class TextFileReader
 
 			return docList;
 		}
-		catch (Exception e) {
+		catch (Exception e) 
+		{
 			e.printStackTrace();
 			return null;
 		}
