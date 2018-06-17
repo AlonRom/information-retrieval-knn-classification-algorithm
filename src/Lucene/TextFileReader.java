@@ -63,14 +63,15 @@ public class TextFileReader
 		String csvSplitBy = ",";
 		
 		List<ClassificationDocument> docList = new ArrayList<ClassificationDocument>();
-		try {
-
+		try 
+		{
 			br = new BufferedReader(new FileReader(csvPath));
-			while ((line = br.readLine()) != null) {
+			while ((line = br.readLine()) != null) 
+			{
 				// use comma as separator
 				String[] str = line.split(csvSplitBy);
-				Integer docId = new Integer(str[0]);
-				Integer classId = new Integer(str[1]);
+				Integer docId = TryParseInt(str[0]);
+				Integer classId = TryParseInt(str[1]);
 				String title = str[2];
 				String content = str[3];
 				//Create the ClassificationDocument
@@ -78,7 +79,7 @@ public class TextFileReader
 				//Add to list
 				docList.add(doc);
 			}
-
+			br.close();
 			return docList;
 		}
 		catch (Exception e) 
