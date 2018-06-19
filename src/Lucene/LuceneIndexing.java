@@ -3,23 +3,26 @@ package Lucene;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.document.*;
+import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
 import org.apache.lucene.misc.TermStats;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
+import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.BytesRef;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+
+import static Lucene.Constants.CONTENT;
+import static org.apache.lucene.document.TextField.TYPE_STORED;
 
 public class LuceneIndexing 
 {
@@ -34,11 +37,74 @@ public class LuceneIndexing
 
     public void IndexDocList()
     {
-        IndexWriter docIndexWriterEmptyStopWords = createIndexWriter(null,false);
-        IndexDocListWithIndexWriter(docIndexWriterEmptyStopWords);
-        CharArraySet stopWords = GetMostFrequentWords(docIndexWriterEmptyStopWords,Constants.STOP_WORDS_COUNT);
-        _docIndexWriter = createIndexWriter(stopWords,true);
+        //IndexWriter docIndexWriterEmptyStopWords = createIndexWriter(null,false,Constants.DOCS_FILE_INDEX_PATH);
+        //IndexDocListWithIndexWriter(docIndexWriterEmptyStopWords);
+        //CharArraySet stopWords = GetMostFrequentWords(docIndexWriterEmptyStopWords,Constants.STOP_WORDS_COUNT);
+        CharArraySet stopWords = new StandardAnalyzer().getStopwordSet();
+        _docIndexWriter = createIndexWriter(stopWords,true,Constants.DOCS_FILE_INDEX_PATH);
         IndexDocListWithIndexWriter(_docIndexWriter);
+    }
+
+    public List<HashMap<String,Float>> TfIDFVector(){
+        try {
+            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
+            //open index reader
+            IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
+            List<HashMap<String,Float>> tfIdfVectorList = new ArrayList<>();
+            HashMap<String,Float> idfMap = new HashMap<>();
+            float tf,wtf,tfIdf;
+            int NumberDocWithTerm;
+            TermsEnum termEnum;
+            String term;
+            BytesRef bytesRef;
+            HashMap<String,Float> tfIdfMap;
+            Terms vector;
+            PostingsEnum postingEnum;
+            for (int docID=0; docID< reader.maxDoc(); docID++) {
+                postingEnum = null;
+                vector = reader.getTermVector(docID, Constants.CONTENT);
+                //Terms vector2 = reader.getTermVector(docID,Constants.TITLE);
+                if (vector==null){
+                    tfIdfVectorList.add(docID,null);
+                    continue;
+                }
+
+                termEnum = vector.iterator();
+                tfIdfMap = new HashMap<>();
+
+                while ((bytesRef = termEnum.next()) != null)
+                {
+                    if (termEnum.seekExact(bytesRef)) {
+                        term = bytesRef.utf8ToString();
+//                        postingEnum = termEnum.postings(null);
+//                        postingEnum.advance(docID);
+//                        float tf = (float) postingEnum.freq();
+                        //tf = (float) termEnum.totalTermFreq();
+                        // Calculate the weighted TF
+                        //wtf = (float) (1 + Math.log10(termEnum.totalTermFreq()));
+                        //Calculate IDF
+                        float idf;
+                        if (idfMap.containsKey(term)){
+                            idf = idfMap.get(term);
+                        }
+                        else {
+                            NumberDocWithTerm = reader.docFreq(new Term(Constants.CONTENT, bytesRef));
+                            idf = (float) Math.log10(reader.maxDoc() / NumberDocWithTerm);
+                            idfMap.put(term,new Float(idf));
+                        }
+                        tfIdf = (float)(1 + Math.log10(termEnum.totalTermFreq())) * idf;
+                        tfIdfMap.put(term,new Float(tfIdf));
+                    }
+                }
+                tfIdfVectorList.add(docID,tfIdfMap);
+                System.out.println(docID);
+            }
+            return tfIdfVectorList;
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private CharArraySet GetMostFrequentWords(IndexWriter index, int numberOfStopWords)
@@ -50,7 +116,7 @@ public class LuceneIndexing
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
 
             //get high frequent terms
-            TermStats[] states = HighFreqTerms.getHighFreqTerms(reader, Constants.STOP_WORDS_COUNT, Constants.CONTENT,
+            TermStats[] states = HighFreqTerms.getHighFreqTerms(reader, Constants.STOP_WORDS_COUNT, CONTENT,
                     new HighFreqTerms.TotalTermFreqComparator());
             List<TermStats> stopWordsCollection = Arrays.asList(states);
             //fill list of stop words
@@ -70,12 +136,12 @@ public class LuceneIndexing
         }
     }
 
-    private IndexWriter createIndexWriter(CharArraySet StopWord,boolean usePorterFilter)
+    private IndexWriter createIndexWriter(CharArraySet StopWord,boolean usePorterFilter, String path)
     {
         try 
         {
             CustomAnalyzer analyzer = new CustomAnalyzer(StopWord, usePorterFilter);
-            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
+            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(path));
             IndexWriterConfig docsFileConfig = new IndexWriterConfig(analyzer);
             docsFileConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
             //create a writer for finding the stop words
@@ -93,11 +159,15 @@ public class LuceneIndexing
     {
         for (ClassificationDocument classDoc:_docList)
         {
+
             Document document = new Document();
             //Add content to document
-            document.add(new TextField(Constants.CONTENT,new StringReader(classDoc.getContent())));
+            VecTextField field = new VecTextField(Constants.CONTENT, classDoc.getContent(),Field.Store.YES);
+            document.add(field);
+
             //Add title to document
-            document.add(new TextField(Constants.TITLE,new StringReader(classDoc.getTitle())));
+            field = new VecTextField(Constants.TITLE, classDoc.getTitle(),Field.Store.YES);
+            document.add(field);
             try 
             {
                 if (writer.getConfig().getOpenMode() == IndexWriterConfig.OpenMode.CREATE) 
