@@ -45,19 +45,19 @@ public class LuceneIndexing
         IndexDocListWithIndexWriter(_docIndexWriter);
     }
 
-    public List<HashMap<String,Float>> TfIDFVector(){
+    public List<HashMap<BytesRef,Float>> TfIDFVector(){
         try {
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
             //open index reader
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
-            List<HashMap<String,Float>> tfIdfVectorList = new ArrayList<>(reader.maxDoc());
-            HashMap<String,Float> idfMap = new HashMap<>();
+            List<HashMap<BytesRef,Float>> tfIdfVectorList = new ArrayList<>(reader.maxDoc());
+            HashMap<BytesRef,Float> idfMap = new HashMap<>();
             float tf,wtf,tfIdf;
             int NumberDocWithTerm;
             TermsEnum termEnum;
             String term;
             BytesRef bytesRef;
-            HashMap<String,Float> tfIdfMap;
+            HashMap<BytesRef,Float> tfIdfMap;
             Terms vector;
             PostingsEnum postingEnum;
             float idf;
@@ -74,24 +74,24 @@ public class LuceneIndexing
                 while ((bytesRef = termEnum.next()) != null)
                 {
                     if (termEnum.seekExact(bytesRef)) {
-                        term = bytesRef.utf8ToString();
+                        //term = bytesRef.utf8ToString();
 
                         //calculate the IDF of term
-                        if (idfMap.containsKey(term)){
-                            idf = idfMap.get(term);
+                        if (idfMap.containsKey(bytesRef)){
+                            idf = idfMap.get(bytesRef);
                         }
                         else {
                             NumberDocWithTerm = reader.docFreq(new Term(Constants.CONTENT, bytesRef));
                             idf = (float) Math.log10(reader.maxDoc() / NumberDocWithTerm);
                             // Store IDF value if it is popular within a lot of documents. To feature use.
                             if (NumberDocWithTerm>10000)
-                                idfMap.put(term,new Float(idf));
+                                idfMap.put(bytesRef,new Float(idf));
                        }
 
                        //Calculate the weighted TF of a term
                        wtf = (float)(1 + Math.log10(termEnum.totalTermFreq()));
                         tfIdf = wtf * idf;
-                        tfIdfMap.put(term,new Float(tfIdf));
+                        tfIdfMap.put(bytesRef,new Float(tfIdf));
                     }
                 }
                 //Add the tfIDF vector to the list
@@ -161,7 +161,7 @@ public class LuceneIndexing
 
             Document document = new Document();
             //Add content to document
-            VecTextField field = new VecTextField(Constants.CONTENT, classDoc.getContent(),Field.Store.YES);
+            VecTextField field = new VecTextField(Constants.CONTENT, classDoc.getContent().replaceAll("[^A-Za-z]",""),Field.Store.YES);
             document.add(field);
 
             //Add title to document

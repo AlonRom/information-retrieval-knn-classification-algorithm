@@ -1,5 +1,7 @@
 package Lucene;
 
+import org.apache.lucene.util.BytesRef;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,9 +70,9 @@ public class DocumentClassificationExperiment
 		List<ClassificationDocument> docList = TextFileReader.getListFromCsv(trainFilePath);
         LuceneIndexing indexer = new LuceneIndexing(docList);
         System.out.println("Starting Indexing...");
-        //indexer.IndexDocList();
+        indexer.IndexDocList();
 		System.out.println("Index Ended");
-		List<HashMap<String,Float>> tfIdfVectorList = new ArrayList<>();
+		List<HashMap<BytesRef,Float>> tfIdfVectorList = new ArrayList<>();
 		tfIdfVectorList = indexer.TfIDFVector();
 	}
 }
