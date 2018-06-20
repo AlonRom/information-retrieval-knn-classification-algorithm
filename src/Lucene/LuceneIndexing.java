@@ -52,7 +52,7 @@ public class LuceneIndexing
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
             List<HashMap<BytesRef,Float>> tfIdfVectorList = new ArrayList<>(reader.maxDoc());
             HashMap<BytesRef,Float> idfMap = new HashMap<>();
-            float tf,wtf,tfIdf;
+            Float wtf,tfIdf;
             int NumberDocWithTerm;
             TermsEnum termEnum;
             String term;
@@ -60,7 +60,7 @@ public class LuceneIndexing
             HashMap<BytesRef,Float> tfIdfMap;
             Terms vector;
             PostingsEnum postingEnum;
-            float idf;
+            Float idf;
             for (int docID=0; docID< reader.maxDoc(); docID++) {
                 vector = reader.getTermVector(docID, Constants.CONTENT);
                 //There is empty line somewhere in the database, therefore there is docID with no terms.
@@ -85,13 +85,13 @@ public class LuceneIndexing
                             idf = (float) Math.log10(reader.maxDoc() / NumberDocWithTerm);
                             // Store IDF value if it is popular within a lot of documents. To feature use.
                             if (NumberDocWithTerm>10000)
-                                idfMap.put(bytesRef,new Float(idf));
+                                idfMap.put(bytesRef,idf);
                        }
 
                        //Calculate the weighted TF of a term
                        wtf = (float)(1 + Math.log10(termEnum.totalTermFreq()));
                         tfIdf = wtf * idf;
-                        tfIdfMap.put(bytesRef,new Float(tfIdf));
+                        tfIdfMap.put(bytesRef,tfIdf);
                     }
                 }
                 //Add the tfIDF vector to the list
