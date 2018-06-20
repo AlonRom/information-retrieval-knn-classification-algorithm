@@ -67,9 +67,10 @@ public class DocumentClassificationExperiment
 	{
 		List<ClassificationDocument> docList = TextFileReader.getListFromCsv(trainFilePath);
         LuceneIndexing indexer = new LuceneIndexing(docList);
+        System.out.println("Starting Indexing...");
         //indexer.IndexDocList();
+		System.out.println("Index Ended");
 		List<HashMap<String,Float>> tfIdfVectorList = new ArrayList<>();
 		tfIdfVectorList = indexer.TfIDFVector();
-		int i = 0;
 	}
 }

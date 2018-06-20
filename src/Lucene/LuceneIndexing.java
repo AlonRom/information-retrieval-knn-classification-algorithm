@@ -50,7 +50,7 @@ public class LuceneIndexing
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
             //open index reader
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
-            List<HashMap<String,Float>> tfIdfVectorList = new ArrayList<>();
+            List<HashMap<String,Float>> tfIdfVectorList = new ArrayList<>(reader.maxDoc());
             HashMap<String,Float> idfMap = new HashMap<>();
             float tf,wtf,tfIdf;
             int NumberDocWithTerm;
@@ -60,15 +60,14 @@ public class LuceneIndexing
             HashMap<String,Float> tfIdfMap;
             Terms vector;
             PostingsEnum postingEnum;
+            float idf;
             for (int docID=0; docID< reader.maxDoc(); docID++) {
-                postingEnum = null;
                 vector = reader.getTermVector(docID, Constants.CONTENT);
-                //Terms vector2 = reader.getTermVector(docID,Constants.TITLE);
+                //There is empty line somewhere in the database, therefore there is docID with no terms.
                 if (vector==null){
                     tfIdfVectorList.add(docID,null);
                     continue;
                 }
-
                 termEnum = vector.iterator();
                 tfIdfMap = new HashMap<>();
 
@@ -76,26 +75,26 @@ public class LuceneIndexing
                 {
                     if (termEnum.seekExact(bytesRef)) {
                         term = bytesRef.utf8ToString();
-//                        postingEnum = termEnum.postings(null);
-//                        postingEnum.advance(docID);
-//                        float tf = (float) postingEnum.freq();
-                        //tf = (float) termEnum.totalTermFreq();
-                        // Calculate the weighted TF
-                        //wtf = (float) (1 + Math.log10(termEnum.totalTermFreq()));
-                        //Calculate IDF
-                        float idf;
+
+                        //calculate the IDF of term
                         if (idfMap.containsKey(term)){
                             idf = idfMap.get(term);
                         }
                         else {
                             NumberDocWithTerm = reader.docFreq(new Term(Constants.CONTENT, bytesRef));
                             idf = (float) Math.log10(reader.maxDoc() / NumberDocWithTerm);
-                            idfMap.put(term,new Float(idf));
-                        }
-                        tfIdf = (float)(1 + Math.log10(termEnum.totalTermFreq())) * idf;
+                            // Store IDF value if it is popular within a lot of documents. To feature use.
+                            if (NumberDocWithTerm>10000)
+                                idfMap.put(term,new Float(idf));
+                       }
+
+                       //Calculate the weighted TF of a term
+                       wtf = (float)(1 + Math.log10(termEnum.totalTermFreq()));
+                        tfIdf = wtf * idf;
                         tfIdfMap.put(term,new Float(tfIdf));
                     }
                 }
+                //Add the tfIDF vector to the list
                 tfIdfVectorList.add(docID,tfIdfMap);
                 System.out.println(docID);
             }
