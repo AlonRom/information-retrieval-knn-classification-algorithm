@@ -161,7 +161,7 @@ public class LuceneIndexing
 
             Document document = new Document();
             //Add content to document
-            VecTextField field = new VecTextField(Constants.CONTENT, classDoc.getContent().replaceAll("[^A-Za-z]",""),Field.Store.YES);
+            VecTextField field = new VecTextField(Constants.CONTENT, classDoc.getContent(),Field.Store.YES);
             document.add(field);
 
             //Add title to document
