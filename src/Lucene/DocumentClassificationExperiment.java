@@ -72,7 +72,11 @@ public class DocumentClassificationExperiment
         System.out.println("Starting Indexing...");
         indexer.IndexDocList();
 		System.out.println("Index Ended");
-		List<HashMap<BytesRef,Float>> tfIdfVectorList = new ArrayList<>();
-		tfIdfVectorList = indexer.TfIDFVector();
+		System.out.println("Building TFIDF Vectors");
+		HashMap<Integer,Float>[] tfIdfVectorList = indexer.TfIDFVector();
+		System.out.println("Done!");
+
+
+
 	}
 }

@@ -73,7 +73,8 @@ public class TextFileReader
 				Integer docId = TryParseInt(str[0]);
 				Integer classId = TryParseInt(str[1]);
 				String title = str[2];
-				String content = str[3];
+				String content = str[3].replaceAll("[^A-Za-z ]","");
+
 				//Create the ClassificationDocument
 				ClassificationDocument doc = new ClassificationDocument(docId,title,content,classId);
 				//Add to list

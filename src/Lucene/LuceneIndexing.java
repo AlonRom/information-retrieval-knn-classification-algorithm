@@ -23,6 +23,7 @@ import java.util.*;
 
 import static Lucene.Constants.CONTENT;
 import static org.apache.lucene.document.TextField.TYPE_STORED;
+import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
 
 public class LuceneIndexing 
 {
@@ -45,66 +46,82 @@ public class LuceneIndexing
         IndexDocListWithIndexWriter(_docIndexWriter);
     }
 
-    public List<HashMap<BytesRef,Float>> TfIDFVector(){
-        try {
+    public HashMap<Integer,Float>[] TfIDFVector()
+    {
+        try{
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
             //open index reader
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
-            List<HashMap<BytesRef,Float>> tfIdfVectorList = new ArrayList<>(reader.maxDoc());
-            HashMap<BytesRef,Float> idfMap = new HashMap<>();
-            Float wtf,tfIdf;
-            int NumberDocWithTerm;
-            TermsEnum termEnum;
-            String term;
+            TermsEnum termEnum = MultiFields.getTerms(reader, Constants.CONTENT).iterator();
             BytesRef bytesRef;
-            HashMap<BytesRef,Float> tfIdfMap;
-            Terms vector;
-            PostingsEnum postingEnum;
-            Float idf;
-            for (int docID=0; docID< reader.maxDoc(); docID++) {
-                vector = reader.getTermVector(docID, Constants.CONTENT);
-                //There is empty line somewhere in the database, therefore there is docID with no terms.
-                if (vector==null){
-                    tfIdfVectorList.add(docID,null);
-                    continue;
-                }
-                termEnum = vector.iterator();
-                tfIdfMap = new HashMap<>();
-
-                while ((bytesRef = termEnum.next()) != null)
+            int termID=0;
+            int NumberDocWithTerm;
+            Float idf,wtf;
+            HashMap<Integer,Float>[] tfIDFVector=new HashMap[reader.numDocs()];
+            while ((bytesRef = termEnum.next()) != null){
+                System.out.println("Term"+termID);
+                if (termEnum.seekExact(bytesRef))
                 {
-                    if (termEnum.seekExact(bytesRef)) {
-                        //term = bytesRef.utf8ToString();
-
-                        //calculate the IDF of term
-                        if (idfMap.containsKey(bytesRef)){
-                            idf = idfMap.get(bytesRef);
+                    NumberDocWithTerm = reader.docFreq(new Term(Constants.CONTENT, bytesRef));
+                    idf = (float) Math.log10(reader.maxDoc() / NumberDocWithTerm);
+                    PostingsEnum post= termEnum.postings(null);
+                    int docID;
+                    while((docID = post.nextDoc()) != NO_MORE_DOCS){
+                        wtf = (float)(1 + Math.log10(post.freq()));
+                        if (tfIDFVector[docID] == null){
+                            HashMap<Integer,Float> map = new HashMap<>();
+                            map.put(termID,wtf*idf);
+                            tfIDFVector[docID] = map;
                         }
                         else {
-                            NumberDocWithTerm = reader.docFreq(new Term(Constants.CONTENT, bytesRef));
-                            idf = (float) Math.log10(reader.maxDoc() / NumberDocWithTerm);
-                            // Store IDF value if it is popular within a lot of documents. To feature use.
-                            if (NumberDocWithTerm>10000)
-                                idfMap.put(bytesRef,idf);
-                       }
-
-                       //Calculate the weighted TF of a term
-                       wtf = (float)(1 + Math.log10(termEnum.totalTermFreq()));
-                        tfIdf = wtf * idf;
-                        tfIdfMap.put(bytesRef,tfIdf);
+                            HashMap <Integer,Float> map = tfIDFVector[docID];
+                            map.put(termID,wtf*idf);
+                            tfIDFVector[docID] = map;
+                        }
                     }
                 }
-                //Add the tfIDF vector to the list
-                tfIdfVectorList.add(docID,tfIdfMap);
-                System.out.println(docID);
+                termID++;
             }
-            return tfIdfVectorList;
+            return tfIDFVector;
         }
         catch (Exception e){
             e.printStackTrace();
             return null;
         }
     }
+
+//    public Integer[] getClassIDArr(){
+//        try {
+//            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
+//            //open index reader
+//            IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
+//            Terms vector;
+//            TermsEnum termEnum;
+//            BytesRef bytesRef;
+//            Integer arr[] = new Integer[reader.numDocs()];
+//            for (int docID=0;docID<reader.numDocs();docID++) {
+//                vector = reader.getTermVector(docID, Constants.CLASSID);
+//                if (vector == null) {
+//                    continue;
+//                }
+//                termEnum = vector.iterator();
+//                while ((bytesRef = termEnum.next()) != null) {
+//                    if (termEnum.seekExact(bytesRef)) {
+//                        arr[docID] = new Integer(bytesRef.utf8ToString());
+//                        if (arr[docID]==25)
+//                            System.out.println(docID);
+//                    }
+//                }
+//            }
+//            return arr;
+//        }
+//        catch (Exception e){
+//            e.printStackTrace();
+//            return null;
+//        }
+//    }
+
+
 
     private CharArraySet GetMostFrequentWords(IndexWriter index, int numberOfStopWords)
     {
@@ -166,6 +183,10 @@ public class LuceneIndexing
 
             //Add title to document
             field = new VecTextField(Constants.TITLE, classDoc.getTitle(),Field.Store.YES);
+            document.add(field);
+
+            //Add ClassId to document
+            field = new VecTextField(Constants.CLASSID, classDoc.getClassID().toString(),Field.Store.YES);
             document.add(field);
             try 
             {
