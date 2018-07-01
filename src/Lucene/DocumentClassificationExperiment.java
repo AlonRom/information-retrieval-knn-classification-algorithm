@@ -1,9 +1,9 @@
 package Lucene;
 
+import org.apache.lucene.index.Term;
 import org.apache.lucene.util.BytesRef;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -15,6 +15,12 @@ public class DocumentClassificationExperiment
 	static String _testFilePath;
 	static String _outputFilePath;
 	static int _numberOfNeighbors;
+    static List<ClassificationDocument> trainDocList;
+    static List<ClassificationDocument> testDocList;
+    static HashMap<Integer,Integer> termDictionary;
+    static HashMap<Integer,Float>[] trainTfIdfVectorArray;
+    static HashMap<Integer,Float>[] testTfIdfVectorArray;
+
 
 	public static void main(String[] args) throws IOException
 	{
@@ -62,21 +68,35 @@ public class DocumentClassificationExperiment
 			 System.exit(1);
 		}
 
-		train(_trainFilePath,_numberOfNeighbors);
+		train(_trainFilePath);
+		test(_testFilePath,_numberOfNeighbors);
 	}
 
-	public static void train(String trainFilePath, int numberOfNeighbors)
+	public static void train(String trainFilePath)
 	{
-		List<ClassificationDocument> docList = TextFileReader.getListFromCsv(trainFilePath);
-        LuceneIndexing indexer = new LuceneIndexing(docList);
-        System.out.println("Starting Indexing...");
+		trainDocList = TextFileReader.getListFromCsv(trainFilePath);
+        LuceneIndexing indexer = new LuceneIndexing(trainDocList,Constants.TRAIN_DOCS_INDEX_PATH);
+        System.out.println("Starting Indexing training set...");
         indexer.IndexDocList();
 		System.out.println("Index Ended");
-		System.out.println("Building TFIDF Vectors");
-		HashMap<Integer,Float>[] tfIdfVectorList = indexer.TfIDFVector();
+		System.out.println("Matching Each Term an Integer");
+		termDictionary = indexer.getTermDicitionary();
+		System.out.println("Building Train TFIDF Vectors");
+		trainTfIdfVectorArray = indexer.TfIDFVector();
+		System.out.println("Done!");
+	}
+
+	public static void test(String testFilePath, int numberOfNeighbors){
+		testDocList = TextFileReader.getListFromCsv(testFilePath);
+		LuceneIndexing indexer = new LuceneIndexing(testDocList,Constants.TEST_DOCS_INDEX_PATH);
+		System.out.println("Starting Indexing test set...");
+		indexer.IndexDocList();
+		System.out.println("Index Ended");
+		System.out.println("Building Test TFIDF Vectors");
+		testTfIdfVectorArray = indexer.testTfIDFVector(Constants.TRAIN_DOCS_INDEX_PATH,Constants.TEST_DOCS_INDEX_PATH,termDictionary);
 		System.out.println("Done!");
 
 
 
-	}
+    }
 }

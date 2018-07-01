@@ -1,55 +1,74 @@
 package Lucene;
 
-import org.apache.lucene.analysis.Analyzer;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
 import org.apache.lucene.misc.TermStats;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.similarities.ClassicSimilarity;
-import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.nio.file.Paths;
 import java.util.*;
 
 import static Lucene.Constants.CONTENT;
-import static org.apache.lucene.document.TextField.TYPE_STORED;
 import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
 
 public class LuceneIndexing 
 {
     List<ClassificationDocument> _docList;
     IndexWriter _docIndexWriter;
+    String _path;
 
-    public LuceneIndexing(List<ClassificationDocument> docList)
+    public LuceneIndexing(List<ClassificationDocument> docList, String path)
     {
         _docList = docList;
         _docIndexWriter = null;
+        _path = path;
     }
 
     public void IndexDocList()
     {
-        //IndexWriter docIndexWriterEmptyStopWords = createIndexWriter(null,false,Constants.DOCS_FILE_INDEX_PATH);
+        //IndexWriter docIndexWriterEmptyStopWords = createIndexWriter(null,false,Constants.TRAIN_DOCS_INDEX_PATH);
         //IndexDocListWithIndexWriter(docIndexWriterEmptyStopWords);
         //CharArraySet stopWords = GetMostFrequentWords(docIndexWriterEmptyStopWords,Constants.STOP_WORDS_COUNT);
         CharArraySet stopWords = new StandardAnalyzer().getStopwordSet();
-        _docIndexWriter = createIndexWriter(stopWords,true,Constants.DOCS_FILE_INDEX_PATH);
+        _docIndexWriter = createIndexWriter(stopWords,true,_path);
         IndexDocListWithIndexWriter(_docIndexWriter);
+    }
+
+    public HashMap<Integer,Integer> getTermDicitionary(){
+        try {
+            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
+            //open index reader
+            IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
+            TermsEnum termEnum = MultiFields.getTerms(reader, Constants.CONTENT).iterator();
+            BytesRef bytesRef;
+            int termID=0;
+            HashMap<Integer,Integer> dicitionary = new HashMap<>();
+            while ((bytesRef = termEnum.next()) != null) {
+
+                if (termEnum.seekExact(bytesRef)) {
+                    dicitionary.put(bytesRef.hashCode(),termID);
+                    termID++;
+                }
+            }
+            return dicitionary;
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public HashMap<Integer,Float>[] TfIDFVector()
     {
         try{
-            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
+            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
             //open index reader
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
             TermsEnum termEnum = MultiFields.getTerms(reader, Constants.CONTENT).iterator();
@@ -68,16 +87,17 @@ public class LuceneIndexing
                     int docID;
                     while((docID = post.nextDoc()) != NO_MORE_DOCS){
                         wtf = (float)(1 + Math.log10(post.freq()));
-                        if (tfIDFVector[docID] == null){
-                            HashMap<Integer,Float> map = new HashMap<>();
-                            map.put(termID,wtf*idf);
-                            tfIDFVector[docID] = map;
-                        }
-                        else {
-                            HashMap <Integer,Float> map = tfIDFVector[docID];
-                            map.put(termID,wtf*idf);
-                            tfIDFVector[docID] = map;
-                        }
+                        addTermToVector(tfIDFVector,wtf,idf,docID,termID);
+//                        if (tfIDFVector[docID] == null){
+//                            HashMap<Integer,Float> map = new HashMap<>();
+//                            map.put(termID,wtf*idf);
+//                            tfIDFVector[docID] = map;
+//                        }
+//                        else {
+//                            HashMap <Integer,Float> map = tfIDFVector[docID];
+//                            map.put(termID,wtf*idf);
+//                            tfIDFVector[docID] = map;
+//                        }
                     }
                 }
                 termID++;
@@ -90,36 +110,73 @@ public class LuceneIndexing
         }
     }
 
-//    public Integer[] getClassIDArr(){
-//        try {
-//            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
-//            //open index reader
-//            IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
-//            Terms vector;
-//            TermsEnum termEnum;
-//            BytesRef bytesRef;
-//            Integer arr[] = new Integer[reader.numDocs()];
-//            for (int docID=0;docID<reader.numDocs();docID++) {
-//                vector = reader.getTermVector(docID, Constants.CLASSID);
-//                if (vector == null) {
-//                    continue;
-//                }
-//                termEnum = vector.iterator();
-//                while ((bytesRef = termEnum.next()) != null) {
-//                    if (termEnum.seekExact(bytesRef)) {
-//                        arr[docID] = new Integer(bytesRef.utf8ToString());
-//                        if (arr[docID]==25)
-//                            System.out.println(docID);
-//                    }
-//                }
-//            }
-//            return arr;
-//        }
-//        catch (Exception e){
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
+
+    public HashMap<Integer,Float>[] testTfIDFVector(String trainDocPath, String testDocPath, HashMap<Integer,Integer> dicitionary)
+    {
+        try{
+            //open test reader
+            Directory testIndexdirectory = FSDirectory.open(Paths.get(testDocPath));
+            IndexReader testReader = DirectoryReader.open(testIndexdirectory);
+
+            //open train reader
+            Directory trainIndexdirectory = FSDirectory.open(Paths.get(testDocPath));
+            IndexReader trainReader = DirectoryReader.open(trainIndexdirectory);
+
+            TermsEnum termEnum = MultiFields.getTerms(testReader, Constants.CONTENT).iterator();
+            HashMap<Integer,Float>[] tfIDFVector=new HashMap[testReader.numDocs()];
+            BytesRef bytesRef;
+            Float idf,wtf;
+            int NumberDocWithTerm;
+
+            while ((bytesRef = termEnum.next()) != null) {
+                if (termEnum.seekExact(bytesRef)) {
+                    if (dicitionary.containsKey(bytesRef.hashCode())){
+                        PostingsEnum post = termEnum.postings(null);
+                        int docID;
+                        Term term = new Term(Constants.CONTENT,bytesRef);
+                        NumberDocWithTerm = trainReader.docFreq(term);
+                        idf = (float) Math.log10(trainReader.maxDoc() / NumberDocWithTerm);
+                        while((docID = post.nextDoc()) != NO_MORE_DOCS){
+                            wtf = (float)(1 + Math.log10(post.freq()));
+                            addTermToVector(tfIDFVector,wtf,idf,docID,dicitionary.get(bytesRef.hashCode()));
+//                            if (tfIDFVector[docID] == null){
+//                                HashMap<Integer,Float> map = new HashMap<>();
+//                                map.put(termID,wtf*idf);
+//                                tfIDFVector[docID] = map;
+//                            }
+//                            else {
+//                                HashMap <Integer,Float> map = tfIDFVector[docID];
+//                                map.put(termID,wtf*idf);
+//                                tfIDFVector[docID] = map;
+//                            }
+
+                        }
+
+                    }
+
+                }
+            }
+            return tfIDFVector;
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void addTermToVector(HashMap<Integer,Float>[] vector,Float wtf, Float idf, int docID, int termID){
+        if (vector[docID] == null){
+            HashMap<Integer,Float> map = new HashMap<>();
+            map.put(termID,wtf*idf);
+            vector[docID] = map;
+        }
+        else {
+            HashMap <Integer,Float> map = vector[docID];
+            map.put(termID,wtf*idf);
+            vector[docID] = map;
+        }
+
+    }
 
 
 
@@ -127,12 +184,12 @@ public class LuceneIndexing
     {
         try
         {
-            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(Constants.DOCS_FILE_INDEX_PATH));
+            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
             //open index reader
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
 
             //get high frequent terms
-            TermStats[] states = HighFreqTerms.getHighFreqTerms(reader, Constants.STOP_WORDS_COUNT, CONTENT,
+            TermStats[] states = HighFreqTerms.getHighFreqTerms(reader, Constants.STOP_WORDS_COUNT, Constants.CONTENT,
                     new HighFreqTerms.TotalTermFreqComparator());
             List<TermStats> stopWordsCollection = Arrays.asList(states);
             //fill list of stop words
@@ -185,9 +242,6 @@ public class LuceneIndexing
             field = new VecTextField(Constants.TITLE, classDoc.getTitle(),Field.Store.YES);
             document.add(field);
 
-            //Add ClassId to document
-            field = new VecTextField(Constants.CLASSID, classDoc.getClassID().toString(),Field.Store.YES);
-            document.add(field);
             try 
             {
                 if (writer.getConfig().getOpenMode() == IndexWriterConfig.OpenMode.CREATE) 
