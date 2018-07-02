@@ -88,16 +88,6 @@ public class LuceneIndexing
                     while((docID = post.nextDoc()) != NO_MORE_DOCS){
                         wtf = (float)(1 + Math.log10(post.freq()));
                         addTermToVector(tfIDFVector,wtf,idf,docID,termID);
-//                        if (tfIDFVector[docID] == null){
-//                            HashMap<Integer,Float> map = new HashMap<>();
-//                            map.put(termID,wtf*idf);
-//                            tfIDFVector[docID] = map;
-//                        }
-//                        else {
-//                            HashMap <Integer,Float> map = tfIDFVector[docID];
-//                            map.put(termID,wtf*idf);
-//                            tfIDFVector[docID] = map;
-//                        }
                     }
                 }
                 termID++;
@@ -139,17 +129,6 @@ public class LuceneIndexing
                         while((docID = post.nextDoc()) != NO_MORE_DOCS){
                             wtf = (float)(1 + Math.log10(post.freq()));
                             addTermToVector(tfIDFVector,wtf,idf,docID,dicitionary.get(bytesRef.hashCode()));
-//                            if (tfIDFVector[docID] == null){
-//                                HashMap<Integer,Float> map = new HashMap<>();
-//                                map.put(termID,wtf*idf);
-//                                tfIDFVector[docID] = map;
-//                            }
-//                            else {
-//                                HashMap <Integer,Float> map = tfIDFVector[docID];
-//                                map.put(termID,wtf*idf);
-//                                tfIDFVector[docID] = map;
-//                            }
-
                         }
 
                     }

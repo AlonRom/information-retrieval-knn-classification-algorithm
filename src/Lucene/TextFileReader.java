@@ -69,7 +69,7 @@ public class TextFileReader
 			while ((line = br.readLine()) != null) 
 			{
 				// use comma as separator
-				String[] str = line.split(csvSplitBy);
+				String[] str = line.split(csvSplitBy,Constants.NUMBER_OF_FILEDS_IN_CSV);
 				Integer docId = TryParseInt(str[0]);
 				Integer classId = TryParseInt(str[1]);
 				String title = str[2];
