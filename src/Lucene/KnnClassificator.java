@@ -8,12 +8,12 @@ import static org.apache.lucene.util.ArrayUtil.swap;
 public abstract class KnnClassificator {
     private Integer k;
     private List<ClassificationDocument> trainDocList;
-    private SparseVector[] trainTfIdfVectorArray;
-    private SparseVector[] testTfIdfVectorArray;
+    private HashMap<Integer,Float>[] trainTfIdfVectorArray;
+    private HashMap<Integer,Float>[] testTfIdfVectorArray;
     private Integer numberOfCatagory;
-    private Integer numberOfTerms;
+    private int numberOfTerms;
 
-    public KnnClassificator(SparseVector[] trainTfIdfVectorArray, SparseVector[] testTfIdfVectorArray
+    public KnnClassificator(HashMap<Integer,Float>[] trainTfIdfVectorArray, HashMap<Integer,Float>[] testTfIdfVectorArray
             , List<ClassificationDocument> trainDocList , Integer k, Integer numberOfCatagory, int numberOfTerms ){
         this.trainTfIdfVectorArray = trainTfIdfVectorArray;
         this.testTfIdfVectorArray = testTfIdfVectorArray;
@@ -24,12 +24,12 @@ public abstract class KnnClassificator {
     }
 
     public Integer classify(Integer numOfDocToClassify){
-        SparseVector test = testTfIdfVectorArray[numOfDocToClassify];
+        HashMap<Integer,Float> test = testTfIdfVectorArray[numOfDocToClassify];
 
         Neighbor[] distanceArray = new Neighbor[trainTfIdfVectorArray.length];
         for (int i=0;i<trainTfIdfVectorArray.length;i++){
             if (trainTfIdfVectorArray[i] == null){
-                SparseVector emptyVector = new SparseVector(numberOfTerms);
+                HashMap<Integer,Float> emptyVector = new HashMap<>();
                 distanceArray[i] = new Neighbor(i, vectorDistance(emptyVector, test));
             }
             else {
@@ -43,7 +43,7 @@ public abstract class KnnClassificator {
         return result;
     }
 
-    public abstract Float vectorDistance(SparseVector train,SparseVector test);
+    public abstract Float vectorDistance(HashMap<Integer,Float> train,HashMap<Integer,Float> test);
 
     private void sortKValuesInArray(Neighbor[] arr, int k){
         int p=0;
@@ -91,7 +91,8 @@ public abstract class KnnClassificator {
         Integer[] classifier = new Integer[testTfIdfVectorArray.length];
         for (int i=0;i<testTfIdfVectorArray.length;i++){
             classifier[i] = classify(i);
-            System.out.println("Doc " + i + " classified");
+            if (i%1000==0)
+                System.out.println("Doc " + i + " classified");
         }
         return classifier;
     }

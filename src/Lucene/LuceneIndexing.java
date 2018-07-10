@@ -69,7 +69,7 @@ public class LuceneIndexing
         }
     }
 
-    public SparseVector[] TfIDFVector(BytesRefHash termDictionary){
+    public HashMap<Integer,Float>[] TfIDFVector(BytesRefHash termDictionary){
         try {
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
             //open index reader
@@ -79,7 +79,7 @@ public class LuceneIndexing
             int termID = 0;
             int NumberDocWithTerm;
             Float idf, wtf;
-            SparseVector[] tfIDFVector = new SparseVector[reader.numDocs()];
+            HashMap<Integer,Float>[] tfIDFVector = new HashMap[reader.numDocs()];
             while ((bytesRef = termEnum.next()) != null) {
                 System.out.println("Term" + termID);
                 if (termEnum.seekExact(bytesRef)) {
@@ -104,43 +104,10 @@ public class LuceneIndexing
     }
 
 
-    public HashMap<Integer,Float>[] TfIDFVector()
-    {
-        try{
-            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
-            //open index reader
-            IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
-            TermsEnum termEnum = MultiFields.getTerms(reader, Constants.CONTENT).iterator();
-            BytesRef bytesRef;
-            int termID=0;
-            int NumberDocWithTerm;
-            Float idf,wtf;
-            HashMap<Integer,Float>[] tfIDFVector=new HashMap[reader.numDocs()];
-            while ((bytesRef = termEnum.next()) != null){
-                System.out.println("Term"+termID);
-                if (termEnum.seekExact(bytesRef))
-                {
-                    NumberDocWithTerm = reader.docFreq(new Term(Constants.CONTENT, bytesRef));
-                    idf = (float) Math.log10(reader.maxDoc() / NumberDocWithTerm);
-                    PostingsEnum post= termEnum.postings(null);
-                    int docID;
-                    while((docID = post.nextDoc()) != NO_MORE_DOCS){
-                        wtf = (float)(1 + Math.log10(post.freq()));
-                        addTermToVector(tfIDFVector,wtf,idf,docID,termID);
-                    }
-                }
-                termID++;
-            }
-            return tfIDFVector;
-        }
-        catch (Exception e){
-            e.printStackTrace();
-            return null;
-        }
-    }
 
 
-    public SparseVector[] testTfIDFVector(String trainDocPath, String testDocPath, BytesRefHash dicitionary)
+
+    public HashMap<Integer, Float>[] testTfIDFVector(String trainDocPath, String testDocPath, BytesRefHash dicitionary)
     {
         try{
             //open test reader
@@ -152,7 +119,7 @@ public class LuceneIndexing
             IndexReader trainReader = DirectoryReader.open(trainIndexdirectory);
 
             TermsEnum termEnum = MultiFields.getTerms(testReader, Constants.CONTENT).iterator();
-            SparseVector[] tfIDFVector=new SparseVector[testReader.numDocs()];
+            HashMap<Integer,Float>[] tfIDFVector=new HashMap[testReader.numDocs()];
             BytesRef bytesRef;
             Float idf,wtf;
             int NumberDocWithTerm;
@@ -182,33 +149,21 @@ public class LuceneIndexing
         }
     }
 
-    private void addTermToVector(SparseVector[] vector,Float wtf, Float idf, int docID, int termID, int size){
+    private void addTermToVector(HashMap<Integer,Float>[] vector,Float wtf, Float idf, int docID, int termID, int size){
         if (vector[docID] == null){
-            SparseVector vec = new SparseVector(size);
+            HashMap<Integer,Float> vec = new HashMap<>();
             vec.put(termID,wtf*idf);
             vector[docID] = vec;
         }
         else {
-           SparseVector vec = vector[docID];
+           HashMap<Integer,Float> vec = vector[docID];
             vec.put(termID,wtf*idf);
             vector[docID] = vec;
         }
 
     }
 
-    private void addTermToVector(HashMap<Integer,Float>[] vector,Float wtf, Float idf, int docID, int termID){
-        if (vector[docID] == null){
-            HashMap<Integer,Float> map = new HashMap<>();
-            map.put(termID,wtf*idf);
-            vector[docID] = map;
-        }
-        else {
-            HashMap <Integer,Float> map = vector[docID];
-            map.put(termID,wtf*idf);
-            vector[docID] = map;
-        }
 
-    }
 
 
 

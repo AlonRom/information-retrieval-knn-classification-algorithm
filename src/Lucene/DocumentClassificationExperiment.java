@@ -19,8 +19,8 @@ public class DocumentClassificationExperiment
     static List<ClassificationDocument> trainDocList;
     static List<ClassificationDocument> testDocList;
     static BytesRefHash termDictionary;
-    static SparseVector[] trainTfIdfVectorArray;
-    static SparseVector[] testTfIdfVectorArray;
+    static HashMap<Integer,Float>[] trainTfIdfVectorArray;
+    static HashMap<Integer,Float>[] testTfIdfVectorArray;
 
 
 	public static void main(String[] args) throws IOException
@@ -75,7 +75,7 @@ public class DocumentClassificationExperiment
 
 	public static void train(String trainFilePath)
 	{
-		trainDocList = TextFileReader.getListFromCsv(trainFilePath,8);
+		trainDocList = TextFileReader.getListFromCsv(trainFilePath,5);
         LuceneIndexing indexer = new LuceneIndexing(trainDocList,Constants.TRAIN_DOCS_INDEX_PATH);
         System.out.println("Starting Indexing training set...");
         indexer.IndexDocList();
@@ -101,12 +101,13 @@ public class DocumentClassificationExperiment
 		termDictionary = null;
 		Integer[] testClassifiction = classifier.getDocsClassification();
 		int sum=0;
-		for (int i=0;i<testClassifiction.length;i++){
+		for (int i=0;i<trainTfIdfVectorArray.length;i++){
 			if (testClassifiction[i]==testDocList.get(i).getClassID()){
 				sum++;
 			}
 		}
-		System.out.println(sum/testClassifiction.length);
+		double result = sum/trainTfIdfVectorArray.length;
+		System.out.println(result);
 
 
 
