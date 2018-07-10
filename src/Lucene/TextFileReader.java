@@ -56,7 +56,7 @@ public class TextFileReader
 	     }  
 	}
 
-	public static List<ClassificationDocument> getListFromCsv(String csvPath)
+	public static List<ClassificationDocument> getListFromCsv(String csvPath, int multiple)
 	{
 		BufferedReader br = null;
 		String line = null;
@@ -66,19 +66,23 @@ public class TextFileReader
 		try 
 		{
 			br = new BufferedReader(new FileReader(csvPath));
+			int i=0;
 			while ((line = br.readLine()) != null) 
 			{
-				// use comma as separator
-				String[] str = line.split(csvSplitBy,Constants.NUMBER_OF_FILEDS_IN_CSV);
-				Integer docId = TryParseInt(str[0]);
-				Integer classId = TryParseInt(str[1]);
-				String title = str[2];
-				String content = str[3].replaceAll("[^A-Za-z ]","");
+				i++;
+				if (i%multiple==0) {
+					// use comma as separator
+					String[] str = line.split(csvSplitBy, Constants.NUMBER_OF_FILEDS_IN_CSV);
+					Integer docId = TryParseInt(str[0]);
+					Integer classId = TryParseInt(str[1]);
+					String title = str[2];
+					String content = str[3].replaceAll("[^A-Za-z ]", "");
 
-				//Create the ClassificationDocument
-				ClassificationDocument doc = new ClassificationDocument(docId,title,content,classId);
-				//Add to list
-				docList.add(doc);
+					//Create the ClassificationDocument
+					ClassificationDocument doc = new ClassificationDocument(docId, title, content, classId);
+					//Add to list
+					docList.add(doc);
+				}
 			}
 			br.close();
 			return docList;

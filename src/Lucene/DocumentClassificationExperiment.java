@@ -74,7 +74,7 @@ public class DocumentClassificationExperiment
 
 	public static void train(String trainFilePath)
 	{
-		trainDocList = TextFileReader.getListFromCsv(trainFilePath);
+		trainDocList = TextFileReader.getListFromCsv(trainFilePath,5);
         LuceneIndexing indexer = new LuceneIndexing(trainDocList,Constants.TRAIN_DOCS_INDEX_PATH);
         System.out.println("Starting Indexing training set...");
         indexer.IndexDocList();
@@ -87,7 +87,7 @@ public class DocumentClassificationExperiment
 	}
 
 	public static void test(String testFilePath, int numberOfNeighbors){
-		testDocList = TextFileReader.getListFromCsv(testFilePath);
+		testDocList = TextFileReader.getListFromCsv(testFilePath,1);
 		LuceneIndexing indexer = new LuceneIndexing(testDocList,Constants.TEST_DOCS_INDEX_PATH);
 		System.out.println("Starting Indexing test set...");
 		indexer.IndexDocList();
@@ -95,6 +95,17 @@ public class DocumentClassificationExperiment
 		System.out.println("Building Test TFIDF Vectors");
 		testTfIdfVectorArray = indexer.testTfIDFVector(Constants.TRAIN_DOCS_INDEX_PATH,Constants.TEST_DOCS_INDEX_PATH,termDictionary);
 		System.out.println("Done!");
+		termDictionary = null;
+		KnnClassificationL2Distance classifier = new KnnClassificationL2Distance(trainTfIdfVectorArray,testTfIdfVectorArray,
+				trainDocList,_numberOfNeighbors,Constants.NUMBER_OF_CATEGORIES);
+		Integer[] testClassifiction = classifier.getDocsClassification();
+		int sum=0;
+		for (int i=0;i<testClassifiction.length;i++){
+			if (testClassifiction[i]==testDocList.get(i).getClassID()){
+				sum++;
+			}
+		}
+		System.out.println(sum/testClassifiction.length);
 
 
 
