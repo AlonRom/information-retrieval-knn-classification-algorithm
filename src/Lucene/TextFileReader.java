@@ -61,19 +61,26 @@ public class TextFileReader
 		BufferedReader br = null;
 		String line = null;
 		String csvSplitBy = ",";
+		int firstDoc=0;
 		
 		List<ClassificationDocument> docList = new ArrayList<ClassificationDocument>();
 		try 
 		{
 			br = new BufferedReader(new FileReader(csvPath));
 			int i=0;
+			boolean first = true;
 			while ((line = br.readLine()) != null) 
 			{
 				i++;
+				String[] str = line.split(csvSplitBy, Constants.NUMBER_OF_FILEDS_IN_CSV);
 				if (i%multiple==0) {
+					if (first && i%multiple==0){
+						firstDoc = TryParseInt(str[0]);
+						first = false;
+					}
 					// use comma as separator
-					String[] str = line.split(csvSplitBy, Constants.NUMBER_OF_FILEDS_IN_CSV);
-					Integer docId = TryParseInt(str[0]);
+
+					Integer docId = (TryParseInt(str[0])-firstDoc+1)%multiple;
 					Integer classId = TryParseInt(str[1]);
 					String title = str[2];
 					String content = str[3].replaceAll("[^A-Za-z ]", "");

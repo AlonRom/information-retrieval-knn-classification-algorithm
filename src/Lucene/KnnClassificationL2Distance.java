@@ -16,6 +16,8 @@ public class KnnClassificationL2Distance extends KnnClassificator {
     @Override
     public Float vectorDistance(HashMap<Integer,Float> train, HashMap<Integer,Float> test) {
         double sum = 0.0;
+
+
         Float trainValue,testValue;
         for (Map.Entry<Integer , Float> entry : train.entrySet()){
             trainValue = entry.getValue();
@@ -26,6 +28,7 @@ public class KnnClassificationL2Distance extends KnnClassificator {
             else{
                 sum = sum + trainValue*trainValue;
             }
+
         }
         for (Map.Entry<Integer , Float> entry : test.entrySet()){
             testValue = entry.getValue();

@@ -75,7 +75,7 @@ public class DocumentClassificationExperiment
 
 	public static void train(String trainFilePath)
 	{
-		trainDocList = TextFileReader.getListFromCsv(trainFilePath,5);
+		trainDocList = TextFileReader.getListFromCsv(trainFilePath,10);
         LuceneIndexing indexer = new LuceneIndexing(trainDocList,Constants.TRAIN_DOCS_INDEX_PATH);
         System.out.println("Starting Indexing training set...");
         indexer.IndexDocList();
@@ -84,7 +84,7 @@ public class DocumentClassificationExperiment
 		termDictionary = indexer.getTermDicitionary();
 		System.out.println("Building Train TFIDF Vectors");
 		trainTfIdfVectorArray = indexer.TfIDFVector(termDictionary);
-		System.out.println("Done!");
+ 		System.out.println("Done!");
 	}
 
 	public static void test(String testFilePath, int numberOfNeighbors){
@@ -101,12 +101,12 @@ public class DocumentClassificationExperiment
 		termDictionary = null;
 		Integer[] testClassifiction = classifier.getDocsClassification();
 		int sum=0;
-		for (int i=0;i<trainTfIdfVectorArray.length;i++){
-			if (testClassifiction[i]==testDocList.get(i).getClassID()){
+		for (int i=0;i<testClassifiction.length;i++){
+			if (testClassifiction[i].equals(testDocList.get(i).getClassID())){
 				sum++;
 			}
 		}
-		double result = sum/trainTfIdfVectorArray.length;
+		double result = ((double) sum) / ((double) testTfIdfVectorArray.length);
 		System.out.println(result);
 
 

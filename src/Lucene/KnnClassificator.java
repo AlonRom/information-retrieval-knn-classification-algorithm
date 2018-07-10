@@ -1,5 +1,6 @@
 package Lucene;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -53,7 +54,7 @@ public abstract class KnnClassificator {
             for (int i=p+1;i<arr.length;i++){
                 if (arr[i].distance.compareTo(min)<0){
                     min = arr[i].distance;
-                    index = arr[i].id;
+                    index = i;
                 }
             }
             swap(arr,p,index);
