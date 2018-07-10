@@ -65,6 +65,40 @@ public class LuceneIndexing
         }
     }
 
+    public SparseVector[] TfIDFVector(HashMap<Integer,Integer> termDictionary){
+        try {
+            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
+            //open index reader
+            IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
+            TermsEnum termEnum = MultiFields.getTerms(reader, Constants.CONTENT).iterator();
+            BytesRef bytesRef;
+            int termID = 0;
+            int NumberDocWithTerm;
+            Float idf, wtf;
+            SparseVector[] tfIDFVector=new SparseVector[reader.numDocs()];
+            while ((bytesRef = termEnum.next()) != null) {
+                System.out.println("Term" + termID);
+                if (termEnum.seekExact(bytesRef)) {
+                    NumberDocWithTerm = reader.docFreq(new Term(Constants.CONTENT, bytesRef));
+                    idf = (float) Math.log10(reader.maxDoc() / NumberDocWithTerm);
+                    PostingsEnum post = termEnum.postings(null);
+                    int docID;
+                    while ((docID = post.nextDoc()) != NO_MORE_DOCS) {
+                        wtf = (float) (1 + Math.log10(post.freq()));
+                        addTermToVector(tfIDFVector, wtf, idf, docID, termID,termDictionary.size());
+                    }
+                }
+            }
+            return tfIDFVector;
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+
     public HashMap<Integer,Float>[] TfIDFVector()
     {
         try{
@@ -141,6 +175,20 @@ public class LuceneIndexing
             e.printStackTrace();
             return null;
         }
+    }
+
+    private void addTermToVector(SparseVector[] vector,Float wtf, Float idf, int docID, int termID, int size){
+        if (vector[docID] == null){
+            SparseVector vec = new SparseVector(size);
+            vec.put(termID,wtf*idf);
+            vector[docID] = vec;
+        }
+        else {
+           SparseVector vec = vector[docID];
+            vec.put(termID,wtf*idf);
+            vector[docID] = vec;
+        }
+
     }
 
     private void addTermToVector(HashMap<Integer,Float>[] vector,Float wtf, Float idf, int docID, int termID){
