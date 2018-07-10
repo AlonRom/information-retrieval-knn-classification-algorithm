@@ -10,6 +10,7 @@ import org.apache.lucene.misc.TermStats;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefHash;
 
 import java.nio.file.Paths;
 import java.util.*;
@@ -40,7 +41,7 @@ public class LuceneIndexing
         IndexDocListWithIndexWriter(_docIndexWriter);
     }
 
-    public HashMap<Integer,Integer> getTermDicitionary(){
+    public BytesRefHash getTermDicitionary(){
         try {
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
             //open index reader
@@ -48,14 +49,17 @@ public class LuceneIndexing
             TermsEnum termEnum = MultiFields.getTerms(reader, Constants.CONTENT).iterator();
             BytesRef bytesRef;
             int termID=0;
-            HashMap<Integer,Integer> dicitionary = new HashMap<>();
+            BytesRefHash dicitionary = new BytesRefHash();
             while ((bytesRef = termEnum.next()) != null) {
 
                 if (termEnum.seekExact(bytesRef)) {
-                    dicitionary.put(bytesRef.hashCode(),termID);
-                    termID++;
+                    if (dicitionary.find(bytesRef)==-1) {
+                        dicitionary.add(bytesRef);
+                        termID++;
+                    }
                 }
             }
+            System.out.println(termID);
             return dicitionary;
 
         }
@@ -65,7 +69,7 @@ public class LuceneIndexing
         }
     }
 
-    public SparseVector[] TfIDFVector(HashMap<Integer,Integer> termDictionary){
+    public SparseVector[] TfIDFVector(BytesRefHash termDictionary){
         try {
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
             //open index reader
@@ -75,7 +79,7 @@ public class LuceneIndexing
             int termID = 0;
             int NumberDocWithTerm;
             Float idf, wtf;
-            SparseVector[] tfIDFVector=new SparseVector[reader.numDocs()];
+            SparseVector[] tfIDFVector = new SparseVector[reader.numDocs()];
             while ((bytesRef = termEnum.next()) != null) {
                 System.out.println("Term" + termID);
                 if (termEnum.seekExact(bytesRef)) {
@@ -85,9 +89,10 @@ public class LuceneIndexing
                     int docID;
                     while ((docID = post.nextDoc()) != NO_MORE_DOCS) {
                         wtf = (float) (1 + Math.log10(post.freq()));
-                        addTermToVector(tfIDFVector, wtf, idf, docID, termID,termDictionary.size());
+                        addTermToVector(tfIDFVector, wtf, idf, docID, termDictionary.find(bytesRef),termDictionary.size());
                     }
                 }
+                termID++;
             }
             return tfIDFVector;
         }
@@ -135,7 +140,7 @@ public class LuceneIndexing
     }
 
 
-    public HashMap<Integer,Float>[] testTfIDFVector(String trainDocPath, String testDocPath, HashMap<Integer,Integer> dicitionary)
+    public SparseVector[] testTfIDFVector(String trainDocPath, String testDocPath, BytesRefHash dicitionary)
     {
         try{
             //open test reader
@@ -147,14 +152,14 @@ public class LuceneIndexing
             IndexReader trainReader = DirectoryReader.open(trainIndexdirectory);
 
             TermsEnum termEnum = MultiFields.getTerms(testReader, Constants.CONTENT).iterator();
-            HashMap<Integer,Float>[] tfIDFVector=new HashMap[testReader.numDocs()];
+            SparseVector[] tfIDFVector=new SparseVector[testReader.numDocs()];
             BytesRef bytesRef;
             Float idf,wtf;
             int NumberDocWithTerm;
 
             while ((bytesRef = termEnum.next()) != null) {
                 if (termEnum.seekExact(bytesRef)) {
-                    if (dicitionary.containsKey(bytesRef.hashCode())){
+                    if (dicitionary.find(bytesRef)!=-1){
                         PostingsEnum post = termEnum.postings(null);
                         int docID;
                         Term term = new Term(Constants.CONTENT,bytesRef);
@@ -162,7 +167,7 @@ public class LuceneIndexing
                         idf = (float) Math.log10(trainReader.maxDoc() / NumberDocWithTerm);
                         while((docID = post.nextDoc()) != NO_MORE_DOCS){
                             wtf = (float)(1 + Math.log10(post.freq()));
-                            addTermToVector(tfIDFVector,wtf,idf,docID,dicitionary.get(bytesRef.hashCode()));
+                            addTermToVector(tfIDFVector,wtf,idf,docID,dicitionary.find(bytesRef),dicitionary.size());
                         }
 
                     }

@@ -2,6 +2,7 @@ package Lucene;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefHash;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -17,9 +18,9 @@ public class DocumentClassificationExperiment
 	static int _numberOfNeighbors;
     static List<ClassificationDocument> trainDocList;
     static List<ClassificationDocument> testDocList;
-    static HashMap<Integer,Integer> termDictionary;
-    static HashMap<Integer,Float>[] trainTfIdfVectorArray;
-    static HashMap<Integer,Float>[] testTfIdfVectorArray;
+    static BytesRefHash termDictionary;
+    static SparseVector[] trainTfIdfVectorArray;
+    static SparseVector[] testTfIdfVectorArray;
 
 
 	public static void main(String[] args) throws IOException
@@ -74,7 +75,7 @@ public class DocumentClassificationExperiment
 
 	public static void train(String trainFilePath)
 	{
-		trainDocList = TextFileReader.getListFromCsv(trainFilePath,5);
+		trainDocList = TextFileReader.getListFromCsv(trainFilePath,8);
         LuceneIndexing indexer = new LuceneIndexing(trainDocList,Constants.TRAIN_DOCS_INDEX_PATH);
         System.out.println("Starting Indexing training set...");
         indexer.IndexDocList();
@@ -82,7 +83,7 @@ public class DocumentClassificationExperiment
 		System.out.println("Matching Each Term an Integer");
 		termDictionary = indexer.getTermDicitionary();
 		System.out.println("Building Train TFIDF Vectors");
-		trainTfIdfVectorArray = indexer.TfIDFVector();
+		trainTfIdfVectorArray = indexer.TfIDFVector(termDictionary);
 		System.out.println("Done!");
 	}
 
@@ -95,9 +96,9 @@ public class DocumentClassificationExperiment
 		System.out.println("Building Test TFIDF Vectors");
 		testTfIdfVectorArray = indexer.testTfIDFVector(Constants.TRAIN_DOCS_INDEX_PATH,Constants.TEST_DOCS_INDEX_PATH,termDictionary);
 		System.out.println("Done!");
-		termDictionary = null;
 		KnnClassificationL2Distance classifier = new KnnClassificationL2Distance(trainTfIdfVectorArray,testTfIdfVectorArray,
-				trainDocList,_numberOfNeighbors,Constants.NUMBER_OF_CATEGORIES);
+				trainDocList,_numberOfNeighbors,Constants.NUMBER_OF_CATEGORIES,termDictionary.size());
+		termDictionary = null;
 		Integer[] testClassifiction = classifier.getDocsClassification();
 		int sum=0;
 		for (int i=0;i<testClassifiction.length;i++){

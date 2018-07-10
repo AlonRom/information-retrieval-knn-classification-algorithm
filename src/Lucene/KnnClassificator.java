@@ -8,26 +8,28 @@ import static org.apache.lucene.util.ArrayUtil.swap;
 public abstract class KnnClassificator {
     private Integer k;
     private List<ClassificationDocument> trainDocList;
-    private HashMap<Integer,Float>[] trainTfIdfVectorArray;
-    private HashMap<Integer,Float>[] testTfIdfVectorArray;
+    private SparseVector[] trainTfIdfVectorArray;
+    private SparseVector[] testTfIdfVectorArray;
     private Integer numberOfCatagory;
+    private Integer numberOfTerms;
 
-    public KnnClassificator(HashMap<Integer,Float>[] trainTfIdfVectorArray, HashMap<Integer,Float>[] testTfIdfVectorArray
-            , List<ClassificationDocument> trainDocList , Integer k, Integer numberOfCatagory ){
+    public KnnClassificator(SparseVector[] trainTfIdfVectorArray, SparseVector[] testTfIdfVectorArray
+            , List<ClassificationDocument> trainDocList , Integer k, Integer numberOfCatagory, int numberOfTerms ){
         this.trainTfIdfVectorArray = trainTfIdfVectorArray;
         this.testTfIdfVectorArray = testTfIdfVectorArray;
         this.trainDocList = trainDocList;
         this.k = k;
         this.numberOfCatagory = numberOfCatagory;
+        this.numberOfTerms = numberOfTerms;
     }
 
     public Integer classify(Integer numOfDocToClassify){
-        HashMap<Integer,Float> test = testTfIdfVectorArray[numOfDocToClassify];
+        SparseVector test = testTfIdfVectorArray[numOfDocToClassify];
 
         Neighbor[] distanceArray = new Neighbor[trainTfIdfVectorArray.length];
         for (int i=0;i<trainTfIdfVectorArray.length;i++){
             if (trainTfIdfVectorArray[i] == null){
-                HashMap<Integer,Float> emptyVector = new HashMap<>();
+                SparseVector emptyVector = new SparseVector(numberOfTerms);
                 distanceArray[i] = new Neighbor(i, vectorDistance(emptyVector, test));
             }
             else {
@@ -41,7 +43,7 @@ public abstract class KnnClassificator {
         return result;
     }
 
-    public abstract Float vectorDistance(HashMap<Integer,Float> train,HashMap<Integer,Float> test);
+    public abstract Float vectorDistance(SparseVector train,SparseVector test);
 
     private void sortKValuesInArray(Neighbor[] arr, int k){
         int p=0;

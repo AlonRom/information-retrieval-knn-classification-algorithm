@@ -73,6 +73,24 @@ public class SparseVector {
         return result;
     }
 
+    public SparseVector minus(SparseVector that) {
+        if (this.n != that.n) throw new IllegalArgumentException("Vector lengths disagree");
+        SparseVector result = new SparseVector(n);
+        for (int i : this.st.keys()) result.put(i, this.get(i));
+        for (int i : that.st.keys()) result.put(i, that.get(i) - result.get(i));
+        return result;
+    }
+
+    public Double getSquareSum(){
+        Double sum=0.0;
+        for (int i : this.st.keys()){
+            Double temp = this.get(i);
+            sum = sum + Math.pow(temp,2);
+
+        }
+        return sum;
+    }
+
     // return a string representation
     public String toString() {
         StringBuilder s = new StringBuilder();
