@@ -24,17 +24,16 @@ public abstract class KnnClassificator {
         this.numberOfTerms = numberOfTerms;
     }
 
-    public Integer classify(Integer numOfDocToClassify){
+    public Integer classify(Integer numOfDocToClassify,Neighbor[] distanceArray){
         HashMap<Integer,Float> test = testTfIdfVectorArray[numOfDocToClassify];
 
-        Neighbor[] distanceArray = new Neighbor[trainTfIdfVectorArray.length];
         for (int i=0;i<trainTfIdfVectorArray.length;i++){
             if (trainTfIdfVectorArray[i] == null){
                 HashMap<Integer,Float> emptyVector = new HashMap<>();
-                distanceArray[i] = new Neighbor(i, vectorDistance(emptyVector, test));
+                distanceArray[i].putIdAndDistnace(i, vectorDistance(emptyVector, test));
             }
             else {
-                distanceArray[i] = new Neighbor(i, vectorDistance(trainTfIdfVectorArray[i], test));
+                distanceArray[i].putIdAndDistnace(i, vectorDistance(trainTfIdfVectorArray[i], test));
             }
         }
         //Arrays.sort(distanceArray);
@@ -90,10 +89,15 @@ public abstract class KnnClassificator {
 
     public Integer[] getDocsClassification(){
         Integer[] classifier = new Integer[testTfIdfVectorArray.length];
+        Neighbor[] distanceArray = new Neighbor[trainTfIdfVectorArray.length];
+        for (int i=0;i<distanceArray.length;i++)
+            distanceArray[i] = new Neighbor(null,null);
         for (int i=0;i<testTfIdfVectorArray.length;i++){
-            classifier[i] = classify(i);
-            if (i%1000==0)
-                System.out.println("Doc " + i + " classified");
+            long startTime = System.nanoTime();
+            classifier[i] = classify(i,distanceArray);
+            long endTime = System.nanoTime();
+            long result = endTime - startTime;
+            System.out.println("Doc " + i + " classified in " + result);
         }
         return classifier;
     }

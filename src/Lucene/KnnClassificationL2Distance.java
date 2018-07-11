@@ -17,14 +17,14 @@ public class KnnClassificationL2Distance extends KnnClassificator {
     public Float vectorDistance(HashMap<Integer,Float> train, HashMap<Integer,Float> test) {
         double sum = 0.0;
 
-
-        Float trainValue,testValue;
+        float trainValue,testValue;
         for (Map.Entry<Integer , Float> entry : train.entrySet()){
             trainValue = entry.getValue();
-            testValue = test.get(entry.getKey());
-            if (testValue != null){
+            if (test.containsKey(entry.getKey())){
+                testValue = test.get(entry.getKey());
                 sum = sum + (trainValue - testValue) * (trainValue - testValue);
             }
+
             else{
                 sum = sum + trainValue*trainValue;
             }
@@ -32,8 +32,7 @@ public class KnnClassificationL2Distance extends KnnClassificator {
         }
         for (Map.Entry<Integer , Float> entry : test.entrySet()){
             testValue = entry.getValue();
-            trainValue = train.get(entry.getKey());
-            if (trainValue==null){
+            if (!train.containsKey(entry.getKey())){
                 sum = sum + (testValue*testValue);
             }
         }

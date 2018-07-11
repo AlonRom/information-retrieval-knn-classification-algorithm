@@ -5,8 +5,11 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class DocumentClassificationExperiment 
 {
@@ -75,7 +78,7 @@ public class DocumentClassificationExperiment
 
 	public static void train(String trainFilePath)
 	{
-		trainDocList = TextFileReader.getListFromCsv(trainFilePath,10);
+		trainDocList = TextFileReader.getListFromCsv(trainFilePath,5);
         LuceneIndexing indexer = new LuceneIndexing(trainDocList,Constants.TRAIN_DOCS_INDEX_PATH);
         System.out.println("Starting Indexing training set...");
         indexer.IndexDocList();
@@ -108,9 +111,12 @@ public class DocumentClassificationExperiment
 		}
 		double result = ((double) sum) / ((double) testTfIdfVectorArray.length);
 		System.out.println(result);
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		Date date = new Date();
+		System.out.println(formatter.format(date));
 
 
 
 
-    }
+	}
 }
