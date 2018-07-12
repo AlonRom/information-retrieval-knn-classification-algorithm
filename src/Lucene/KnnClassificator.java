@@ -1,8 +1,8 @@
 package Lucene;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.lucene.util.ArrayUtil.swap;
 
@@ -10,7 +10,9 @@ public abstract class KnnClassificator {
     private Integer k;
     private List<ClassificationDocument> trainDocList;
     private HashMap<Integer,Float>[] trainTfIdfVectorArray;
+    private HashMap<Integer,Float>[] trainTFIdfVectorArraySquare;
     private HashMap<Integer,Float>[] testTfIdfVectorArray;
+    private HashMap<Integer,Float>[] testTfIdfVectorArraySquare;
     private Integer numberOfCatagory;
     private int numberOfTerms;
 
@@ -26,14 +28,15 @@ public abstract class KnnClassificator {
 
     public Integer classify(Integer numOfDocToClassify,Neighbor[] distanceArray){
         HashMap<Integer,Float> test = testTfIdfVectorArray[numOfDocToClassify];
+        HashMap testSquare = testTfIdfVectorArraySquare[numOfDocToClassify];
 
         for (int i=0;i<trainTfIdfVectorArray.length;i++){
             if (trainTfIdfVectorArray[i] == null){
                 HashMap<Integer,Float> emptyVector = new HashMap<>();
-                distanceArray[i].putIdAndDistnace(i, vectorDistance(emptyVector, test));
+                distanceArray[i].putIdAndDistnace(i, vectorDistance(emptyVector, emptyVector, test, testSquare));
             }
             else {
-                distanceArray[i].putIdAndDistnace(i, vectorDistance(trainTfIdfVectorArray[i], test));
+                distanceArray[i].putIdAndDistnace(i, vectorDistance(trainTfIdfVectorArray[i],trainTFIdfVectorArraySquare[i],test,testSquare));
             }
         }
         //Arrays.sort(distanceArray);
@@ -43,7 +46,7 @@ public abstract class KnnClassificator {
         return result;
     }
 
-    public abstract Float vectorDistance(HashMap<Integer,Float> train,HashMap<Integer,Float> test);
+    public abstract Float vectorDistance(HashMap<Integer,Float> train,HashMap<Integer,Float> trainSqaure,HashMap<Integer,Float> test, HashMap<Integer,Float> testSquare);
 
     private void sortKValuesInArray(Neighbor[] arr, int k){
         int p=0;
@@ -92,6 +95,8 @@ public abstract class KnnClassificator {
         Neighbor[] distanceArray = new Neighbor[trainTfIdfVectorArray.length];
         for (int i=0;i<distanceArray.length;i++)
             distanceArray[i] = new Neighbor(null,null);
+        trainTFIdfVectorArraySquare = calculateSquareValuesOfHashMap(trainTfIdfVectorArray);
+        testTfIdfVectorArraySquare = calculateSquareValuesOfHashMap(testTfIdfVectorArray);
         for (int i=0;i<testTfIdfVectorArray.length;i++){
             long startTime = System.nanoTime();
             classifier[i] = classify(i,distanceArray);
@@ -100,6 +105,17 @@ public abstract class KnnClassificator {
             System.out.println("Doc " + i + " classified in " + result);
         }
         return classifier;
+    }
+
+    private HashMap<Integer , Float>[] calculateSquareValuesOfHashMap(HashMap<Integer,Float>[] mapArray){
+        HashMap<Integer,Float>[] mapArraySqaure = new HashMap[mapArray.length];
+        for (int i=0;i<mapArray.length;i++){
+            mapArraySqaure[i] = new HashMap();
+            for (Map.Entry<Integer,Float> entry : mapArray[i].entrySet()){
+                mapArraySqaure[i].put(entry.getKey(),entry.getValue()*entry.getValue());
+            }
+        }
+        return mapArraySqaure;
     }
 
 

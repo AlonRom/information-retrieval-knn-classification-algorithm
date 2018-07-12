@@ -14,26 +14,27 @@ public class KnnClassificationL2Distance extends KnnClassificator {
 
 
     @Override
-    public Float vectorDistance(HashMap<Integer,Float> train, HashMap<Integer,Float> test) {
+    public Float vectorDistance(HashMap<Integer,Float> train, HashMap <Integer,Float> trainSquare , HashMap<Integer,Float> test , HashMap<Integer,Float> testSquare) {
         double sum = 0.0;
 
-        float trainValue,testValue,difference;
-        for (Map.Entry<Integer , Float> entry : train.entrySet()){
-            trainValue = entry.getValue();
+        float trainValue,trainValueSquare,testValueSquare,difference;
+        for (Map.Entry<Integer , Float> entry : trainSquare.entrySet()){
             if (test.containsKey(entry.getKey())){
+                trainValue = train.get(entry.getKey());
                 difference = trainValue - test.get(entry.getKey());
                 sum = sum + difference * difference;
             }
 
             else{
-                sum = sum + trainValue*trainValue;
+                trainValueSquare = entry.getValue();
+                sum = sum + trainValueSquare;
             }
 
         }
-        for (Map.Entry<Integer , Float> entry : test.entrySet()){
-            testValue = entry.getValue();
+        for (Map.Entry<Integer , Float> entry : testSquare.entrySet()){
+            testValueSquare = entry.getValue();
             if (!train.containsKey(entry.getKey())){
-                sum = sum + (testValue*testValue);
+                sum = sum + testValueSquare;
             }
         }
         return (float) Math.sqrt(sum);
