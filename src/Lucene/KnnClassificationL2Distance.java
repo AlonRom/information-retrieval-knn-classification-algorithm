@@ -14,26 +14,33 @@ public class KnnClassificationL2Distance extends KnnClassificator {
 
 
     @Override
-    public Float vectorDistance(HashMap<Integer,Float> train, HashMap<Integer,Float> test) {
+    public Float vectorDistance(HashMap<Integer,Float> train, HashMap.Entry<Integer,Float>[] trainArraySquare , HashMap<Integer,Float> test , HashMap.Entry<Integer,Float>[] testArraySquare) {
         double sum = 0.0;
 
-        float trainValue,testValue,difference;
-        for (Map.Entry<Integer , Float> entry : train.entrySet()){
-            trainValue = entry.getValue();
-            if (test.containsKey(entry.getKey())){
-                difference = trainValue - test.get(entry.getKey());
+        float trainValue,testValue,difference,testValueSquare,trainValueSquare;
+        if (train==null){
+            for (int i=0;i<testArraySquare.length;i++){
+                testValue = testArraySquare[i].getValue();
+                sum = sum + testValue*testValue;
+            }
+        }
+        for (int i=0;i<trainArraySquare.length;i++){
+            if (test.containsKey(trainArraySquare[i].getKey())){
+                trainValue = train.get(trainArraySquare[i].getKey());
+                difference = trainValue - test.get(trainArraySquare[i].getKey());
                 sum = sum + difference * difference;
             }
 
             else{
-                sum = sum + trainValue*trainValue;
+                trainValueSquare = trainArraySquare[i].getValue();
+                sum = sum + trainValueSquare;
             }
 
         }
-        for (Map.Entry<Integer , Float> entry : test.entrySet()){
-            testValue = entry.getValue();
-            if (!train.containsKey(entry.getKey())){
-                sum = sum + (testValue*testValue);
+        for (int i=0;i<testArraySquare.length;i++){
+            testValueSquare = testArraySquare[i].getValue();
+            if (train != null && !train.containsKey(testArraySquare[i].getKey())){
+                sum = sum + testValueSquare;
             }
         }
         return (float) Math.sqrt(sum);

@@ -78,6 +78,9 @@ public class DocumentClassificationExperiment
 
 	public static void train(String trainFilePath)
 	{
+
+
+
 		trainDocList = TextFileReader.getListFromCsv(trainFilePath,5);
         LuceneIndexing indexer = new LuceneIndexing(trainDocList,Constants.TRAIN_DOCS_INDEX_PATH);
         System.out.println("Starting Indexing training set...");
