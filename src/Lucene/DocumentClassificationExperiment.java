@@ -103,14 +103,11 @@ public class DocumentClassificationExperiment
 				trainDocList,_numberOfNeighbors,Constants.NUMBER_OF_CATEGORIES,termDictionary.size());
 		termDictionary = null;
 		Integer[] testClassifiction = classifier.getDocsClassification();
-		int sum=0;
-		for (int i=0;i<testClassifiction.length;i++){
-			if (testClassifiction[i].equals(testDocList.get(i).getClassID())){
-				sum++;
-			}
-		}
-		double result = ((double) sum) / ((double) testTfIdfVectorArray.length);
-		System.out.println(result);
+		ClassificationEvaluate evaluate = new ClassificationEvaluate(testClassifiction,testDocList,Constants.NUMBER_OF_CATEGORIES);
+		evaluate.evaluate();
+		double microF1 = evaluate.getMicroF1();
+		double macroF1 = evaluate.getMacroF1();
+		System.out.println("for " + numberOfNeighbors + " the micro F1 is " + microF1 + "  and macro F1 is " + macroF1);
 		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		Date date = new Date();
 		System.out.println(formatter.format(date));
