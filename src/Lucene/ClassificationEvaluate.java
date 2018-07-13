@@ -53,6 +53,7 @@ public class ClassificationEvaluate {
                 line = line.concat(",");
                 line = line.concat(doclist.get(i).getClassID().toString());
                 bw.write(line);
+                bw.newLine();
             }
             bw.close();
             fos.close();
