@@ -1,17 +1,18 @@
 package Lucene;
 
-import com.sun.org.apache.xerces.internal.util.SymbolTable;
+
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
 import org.apache.lucene.misc.TermStats;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
-
+import org.apache.lucene.classification.KNearestNeighborClassifier;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -20,6 +21,7 @@ import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
 
 public class LuceneIndexing 
 {
+
     List<ClassificationDocument> _docList;
     IndexWriter _docIndexWriter;
     String _path;
@@ -167,6 +169,7 @@ public class LuceneIndexing
 
 
 
+
     private CharArraySet GetMostFrequentWords(IndexWriter index, int numberOfStopWords)
     {
         try
@@ -228,6 +231,11 @@ public class LuceneIndexing
             //Add title to document
             field = new VecTextField(Constants.TITLE, classDoc.getTitle(),Field.Store.YES);
             document.add(field);
+
+
+
+           field = new VecTextField("dor",classDoc.getClassID().toString(),Field.Store.YES);
+           document.add(field);
 
             try 
             {

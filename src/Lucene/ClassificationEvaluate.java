@@ -1,5 +1,7 @@
 package Lucene;
 
+import java.io.*;
+import java.nio.Buffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,6 +26,41 @@ public class ClassificationEvaluate {
         this.falseNegative = new Integer[numberOfCategories];
         Arrays.fill(falseNegative,0);
 
+    }
+
+    public void printResultsToFile(String outPath,String testPath){
+        BufferedReader br;
+        int firstID=0;
+        try {
+            br = new BufferedReader(new FileReader(testPath));
+            String line = br.readLine();
+            String[] str = line.split(",",Constants.NUMBER_OF_FILEDS_IN_CSV);
+            firstID = TextFileReader.TryParseInt(str[0]);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
+        File out = new File(outPath);
+        try {
+            FileOutputStream fos = new FileOutputStream(out);
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+            for (int i = 0; i < doclist.size(); i++) {
+                Integer docID = firstID + i;
+                String line = docID.toString();
+                line = line.concat(",");
+                line = line.concat(classifcationResults[i].toString());
+                line = line.concat(",");
+                line = line.concat(doclist.get(i).getClassID().toString());
+                bw.write(line);
+            }
+            bw.close();
+            fos.close();
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void evaluate(){

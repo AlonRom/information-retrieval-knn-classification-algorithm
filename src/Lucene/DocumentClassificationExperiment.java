@@ -1,6 +1,7 @@
 package Lucene;
 
-import org.apache.lucene.index.Term;
+import org.apache.lucene.classification.ClassificationResult;
+import org.apache.lucene.classification.KNearestNeighborClassifier;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 
@@ -9,7 +10,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 
 public class DocumentClassificationExperiment 
 {
@@ -24,6 +24,7 @@ public class DocumentClassificationExperiment
     static BytesRefHash termDictionary;
     static HashMap<Integer,Float>[] trainTfIdfVectorArray;
     static HashMap<Integer,Float>[] testTfIdfVectorArray;
+    static KNearestNeighborClassifier classifier1;
 
 
 	public static void main(String[] args) throws IOException
@@ -81,36 +82,39 @@ public class DocumentClassificationExperiment
 
 
 
-		trainDocList = TextFileReader.getListFromCsv(trainFilePath,5);
+		trainDocList = TextFileReader.getListFromCsv(trainFilePath,1);
         LuceneIndexing indexer = new LuceneIndexing(trainDocList,Constants.TRAIN_DOCS_INDEX_PATH);
         System.out.println("Starting Indexing training set...");
         indexer.IndexDocList();
 		System.out.println("Index Ended");
-		System.out.println("Matching Each Term an Integer");
-		termDictionary = indexer.getTermDicitionary();
-		System.out.println("Building Train TFIDF Vectors");
-		trainTfIdfVectorArray = indexer.TfIDFVector(termDictionary);
- 		System.out.println("Done!");
+		ClassificationKNN classi = new ClassificationKNN(Constants.TRAIN_DOCS_INDEX_PATH,_numberOfNeighbors);
+		classifier1= classi.getClassifier();
 	}
 
 	public static void test(String testFilePath, int numberOfNeighbors){
 		testDocList = TextFileReader.getListFromCsv(testFilePath,1);
-		LuceneIndexing indexer = new LuceneIndexing(testDocList,Constants.TEST_DOCS_INDEX_PATH);
-		System.out.println("Starting Indexing test set...");
-		indexer.IndexDocList();
-		System.out.println("Index Ended");
-		System.out.println("Building Test TFIDF Vectors");
-		testTfIdfVectorArray = indexer.testTfIDFVector(Constants.TRAIN_DOCS_INDEX_PATH,Constants.TEST_DOCS_INDEX_PATH,termDictionary);
-		System.out.println("Done!");
-		KnnClassificationL2Distance classifier = new KnnClassificationL2Distance(trainTfIdfVectorArray,testTfIdfVectorArray,
-				trainDocList,_numberOfNeighbors,Constants.NUMBER_OF_CATEGORIES,termDictionary.size());
-		termDictionary = null;
-		Integer[] testClassifiction = classifier.getDocsClassification();
+		List<ClassificationResult<BytesRef>> resultList=null;
+		Integer[] testClassifiction = new Integer[testDocList.size()];
+		for (ClassificationDocument doc : testDocList){
+			try {
+				long startTime = System.nanoTime();
+				resultList = classifier1.getClasses(doc.getContent(), 1);
+				testClassifiction[doc.getDocId()] = new Integer(resultList.get(0).getAssignedClass().utf8ToString());
+				long endTime = System.nanoTime();
+				long result1 = endTime-startTime;
+				System.out.println("Ended Classify " + doc.getDocId() + " in " + result1);
+			}
+			catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+
 		ClassificationEvaluate evaluate = new ClassificationEvaluate(testClassifiction,testDocList,Constants.NUMBER_OF_CATEGORIES);
 		evaluate.evaluate();
 		double microF1 = evaluate.getMicroF1();
 		double macroF1 = evaluate.getMacroF1();
 		System.out.println("for " + numberOfNeighbors + " the micro F1 is " + microF1 + "  and macro F1 is " + macroF1);
+		evaluate.printResultsToFile(_outputFilePath,testFilePath);
 		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		Date date = new Date();
 		System.out.println(formatter.format(date));
