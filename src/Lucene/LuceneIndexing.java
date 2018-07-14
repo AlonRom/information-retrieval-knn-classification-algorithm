@@ -1,19 +1,14 @@
 package Lucene;
 
 
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
-import org.apache.lucene.misc.HighFreqTerms;
-import org.apache.lucene.misc.TermStats;
-import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
-import org.apache.lucene.classification.KNearestNeighborClassifier;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -36,9 +31,6 @@ public class LuceneIndexing
 
     public void IndexDocList()
     {
-        //IndexWriter docIndexWriterEmptyStopWords = createIndexWriter(null,false,Constants.TRAIN_DOCS_INDEX_PATH);
-        //IndexDocListWithIndexWriter(docIndexWriterEmptyStopWords);
-        //CharArraySet stopWords = GetMostFrequentWords(docIndexWriterEmptyStopWords,Constants.STOP_WORDS_COUNT);
         CharArraySet stopWords = new StandardAnalyzer().getStopwordSet();
         _docIndexWriter = createIndexWriter(stopWords,true,_path);
         IndexDocListWithIndexWriter(_docIndexWriter);
@@ -167,12 +159,6 @@ public class LuceneIndexing
         }
 
     }
-
-
-
-
-
-
 
 
     private IndexWriter createIndexWriter(CharArraySet StopWord,boolean usePorterFilter, String path)
