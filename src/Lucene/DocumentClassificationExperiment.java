@@ -24,7 +24,7 @@ public class DocumentClassificationExperiment
     static BytesRefHash termDictionary;
     static HashMap<Integer,Float>[] trainTfIdfVectorArray;
     static HashMap<Integer,Float>[] testTfIdfVectorArray;
-    static KNearestNeighborClassifier classifier1;
+    static KNearestNeighborClassifier classifier;
 
 
 	public static void main(String[] args) throws IOException
@@ -88,28 +88,28 @@ public class DocumentClassificationExperiment
         indexer.IndexDocList();
 		System.out.println("Index Ended");
 		ClassificationKNN classi = new ClassificationKNN(Constants.TRAIN_DOCS_INDEX_PATH,_numberOfNeighbors);
-		classifier1= classi.getClassifier();
+		classifier = classi.getClassifier();
 	}
 
 	public static void test(String testFilePath, int numberOfNeighbors){
 		testDocList = TextFileReader.getListFromCsv(testFilePath,1);
 		List<ClassificationResult<BytesRef>> resultList=null;
-		Integer[] testClassifiction = new Integer[testDocList.size()];
+		Integer[] testClassification = new Integer[testDocList.size()];
 		for (ClassificationDocument doc : testDocList){
 			try {
 				long startTime = System.nanoTime();
-				resultList = classifier1.getClasses(doc.getContent(), 1);
-				testClassifiction[doc.getDocId()] = new Integer(resultList.get(0).getAssignedClass().utf8ToString());
+				resultList = classifier.getClasses(doc.getContent(), 1);
+				testClassification[doc.getDocId()] = new Integer(resultList.get(0).getAssignedClass().utf8ToString());
 				long endTime = System.nanoTime();
-				long result1 = endTime-startTime;
-				System.out.println("Ended Classify " + doc.getDocId() + " in " + result1);
+				long timeDifference = endTime-startTime;
+				System.out.println("Ended Classify " + doc.getDocId() + " in " + timeDifference);
 			}
 			catch (Exception e){
 				e.printStackTrace();
 			}
 		}
 
-		ClassificationEvaluate evaluate = new ClassificationEvaluate(testClassifiction,testDocList,Constants.NUMBER_OF_CATEGORIES);
+		ClassificationEvaluate evaluate = new ClassificationEvaluate(testClassification,testDocList,Constants.NUMBER_OF_CATEGORIES);
 		evaluate.evaluate();
 		double microF1 = evaluate.getMicroF1();
 		double macroF1 = evaluate.getMacroF1();
@@ -118,9 +118,6 @@ public class DocumentClassificationExperiment
 		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		Date date = new Date();
 		System.out.println(formatter.format(date));
-
-
-
 
 	}
 }

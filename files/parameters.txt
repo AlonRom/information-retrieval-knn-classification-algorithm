@@ -1,4 +1,4 @@
 trainFile=./files/train.csv
 testFile=./files/test.csv
 outputFile=./files/out1.csv 
-k=159
+k=11

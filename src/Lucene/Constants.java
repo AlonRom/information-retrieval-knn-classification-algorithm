@@ -7,7 +7,11 @@ public class Constants
 	public static final String TEST_DOCS_INDEX_PATH = "./files/indexes/test";
 	public static final String CONTENT = "content";
 	public static final String TITLE = "title";
+	public static final String CLASSID = "class";
 	public static final int STOP_WORDS_COUNT = 18;
 	public static final int NUMBER_OF_FILEDS_IN_CSV = 4;
 	public static final int NUMBER_OF_CATEGORIES = 14;
+	public static final int MIN_DOCS_FREQ = 1;
+	public static final int  MIN_TERM_FREQ = 1;
+
 }

@@ -33,8 +33,8 @@ public class ClassificationKNN {
             IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
             CustomAnalyzer ana = new CustomAnalyzer(new StandardAnalyzer().getStopwordSet());
             ClassicSimilarity sim = new ClassicSimilarity();
-
-            KNearestNeighborClassifier classifier = new KNearestNeighborClassifier(reader,sim,ana,null,k,1,1,"dor",Constants.CONTENT,Constants.TITLE);
+            // Create the KNN classifier
+            KNearestNeighborClassifier classifier = new KNearestNeighborClassifier(reader,sim,ana,null,k,Constants.MIN_DOCS_FREQ,Constants.MIN_TERM_FREQ,Constants.CLASSID,Constants.CONTENT,Constants.TITLE);
             return classifier;
         }
         catch (Exception e){

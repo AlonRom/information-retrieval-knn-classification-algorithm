@@ -1,6 +1,7 @@
 package Lucene;
 
 
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
@@ -43,6 +44,7 @@ public class LuceneIndexing
         IndexDocListWithIndexWriter(_docIndexWriter);
     }
 
+    //not in use because we change to Lucene's KNN Classifier
     public BytesRefHash getTermDicitionary(){
         try {
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
@@ -71,6 +73,7 @@ public class LuceneIndexing
         }
     }
 
+    //not in use because we change to Lucene's KNN Classifier
     public HashMap<Integer,Float>[] TfIDFVector(BytesRefHash termDictionary){
         try {
             Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
@@ -108,7 +111,7 @@ public class LuceneIndexing
 
 
 
-
+    //not in use because we change to Lucene's KNN Classifier
     public HashMap<Integer, Float>[] testTfIDFVector(String trainDocPath, String testDocPath, BytesRefHash dicitionary)
     {
         try{
@@ -170,34 +173,7 @@ public class LuceneIndexing
 
 
 
-    private CharArraySet GetMostFrequentWords(IndexWriter index, int numberOfStopWords)
-    {
-        try
-        {
-            Directory docsFileIndexdirectory = FSDirectory.open(Paths.get(_path));
-            //open index reader
-            IndexReader reader = DirectoryReader.open(docsFileIndexdirectory);
 
-            //get high frequent terms
-            TermStats[] states = HighFreqTerms.getHighFreqTerms(reader, Constants.STOP_WORDS_COUNT, Constants.CONTENT,
-                    new HighFreqTerms.TotalTermFreqComparator());
-            List<TermStats> stopWordsCollection = Arrays.asList(states);
-            //fill list of stop words
-            System.out.print("Stop Words: ");
-            for (TermStats term : states)
-            {
-                System.out.print(term.termtext.utf8ToString() + " ");
-            }
-            System.out.println();
-            //return a char array set in order to initialize other analyzers with stop words consideration
-            return new CharArraySet(stopWordsCollection, true);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     private IndexWriter createIndexWriter(CharArraySet StopWord,boolean usePorterFilter, String path)
     {
@@ -234,7 +210,7 @@ public class LuceneIndexing
 
 
 
-           field = new VecTextField("dor",classDoc.getClassID().toString(),Field.Store.YES);
+           field = new VecTextField(Constants.CLASSID,classDoc.getClassID().toString(),Field.Store.YES);
            document.add(field);
 
             try 

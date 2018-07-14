@@ -1,7 +1,6 @@
 package Lucene;
 
 import java.io.*;
-import java.nio.Buffer;
 import java.util.Arrays;
 import java.util.List;
 
